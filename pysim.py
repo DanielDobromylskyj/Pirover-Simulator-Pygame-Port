@@ -23,3 +23,4 @@ if __name__ == "__main__":
             simulator.run()
 
             start_window.quit_callback()
+            break
