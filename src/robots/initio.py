@@ -21,6 +21,9 @@ from src.sensors.linesensor import LineSensorMap
 import src.robots.base_robot as base_robot
 from src.robots.robotconstants import *
 
+from pirover_simulator.src.robots.robotconstants import IR_MIN_RANGE, IR_BEAM_ANGLE, SONAR_BEAM_ANGLE, SONAR_MIN_RANGE, \
+    SONAR_MAX_RANGE, IR_MAX_RANGE
+
 # Constants specific to the Initio robot.
 
 IR_SENSOR_ANGLE = 0.80
@@ -341,6 +344,9 @@ class Initio(base_robot.Robot):
     def delete(self):
         """Deletes the robot sprite."""
         print("Delete Call (NOT IMPLEMENTED)")
+
+    def render(self):
+        self.surface.blit(self.robot_images["png_small"], self.position)
 
     def draw_robot_position(self):
         """Draws a white circle on the screen at the current position of the robot."""
