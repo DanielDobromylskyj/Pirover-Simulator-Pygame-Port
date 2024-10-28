@@ -73,6 +73,7 @@ class PanningDistanceSensor:
         self.sonar_angle = 0
         self.sonar_angle_target = 0
         self.sonar_sensor = Sonar(sonar_map, min_range, max_range, beam_angle)
+        self.rotation = 0
 
         # centre point of sensor image sprite
         self.sensor_offset_x = self.width - 8

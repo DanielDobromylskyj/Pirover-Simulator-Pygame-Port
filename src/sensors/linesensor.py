@@ -1,23 +1,26 @@
 import math
+
 import pygame
 import src.util
 import src.sensors.base_sensor as base_sensor
 
 
+class LineMapData:
+    def __init__(self, line_map_sprite, position):
+        self.x, self.y = position
+        self.image = line_map_sprite
+
+
 class LineSensorMap:
-    def __init__(self, line_map_sprite):
+    def __init__(self, line_map_sprite: LineMapData):
         self.pixel_cache = {}
 
-        if line_map_sprite is None:
-            self.line_map_sprite = None
-            self.line_data = None
-            self.x_offset = 0
-            self.y_offset = 0
-        else:
-            self.line_map_sprite = line_map_sprite
-            self.x_offset = self.line_map_sprite.x - int(self.line_map_sprite.image.width / 2.0)
-            self.y_offset = self.line_map_sprite.y - int(self.line_map_sprite.image.height / 2.0)
-            self.line_data = self.line_map_sprite.image_data
+        self.line_map_sprite = None
+        self.line_data = None
+        self.x_offset = 0
+        self.y_offset = 0
+
+        self.set_line_map(line_map_sprite)
 
     def set_line_map(self, line_map_sprite):
         """Update the line sensor map with a new image."""
@@ -29,9 +32,9 @@ class LineSensorMap:
             self.y_offset = 0
         else:
             self.line_map_sprite = line_map_sprite
-            self.x_offset = self.line_map_sprite.x - int(self.line_map_sprite.image.width / 2.0)
-            self.y_offset = self.line_map_sprite.y - int(self.line_map_sprite.image.height / 2.0)
-            self.line_data = self.line_map_sprite.image_data
+            self.x_offset = self.line_map_sprite.x - int(self.line_map_sprite.image.get_width() / 2.0)
+            self.y_offset = self.line_map_sprite.y - int(self.line_map_sprite.image.get_height() / 2.0)
+            self.line_data = self.line_map_sprite.image
 
     def check_triggered(self, x, y):
         """Takes as input the current xy position of the line sensor in screen coordinates, this function will then
@@ -42,22 +45,24 @@ class LineSensorMap:
             if self.line_data is not None:
                 theta = -math.radians(self.line_map_sprite.rotation)
 
+                # todo - FIX ME / Make a implementation
                 px, py = src.util.rotate_around_og((self.line_map_sprite.x, self.line_map_sprite.y), (x, y), -theta)
 
                 px -= self.x_offset
                 py -= self.y_offset
 
-                if px < 0 or px > self.line_map_sprite.width:
+                if px < 0 or px > self.line_map_sprite.image.get_width():
                     return False
 
-                if py < 0 or py > self.line_map_sprite.height:
+                if py < 0 or py > self.line_map_sprite.image.get_height:
                     return False
 
-                if ((int(px), int(py)) in self.pixel_cache):
+                if (int(px), int(py)) in self.pixel_cache:
                     a = int(self.pixel_cache[(int(px), int(py))])
                     return a > 0
-                else:
-                    pix = self.line_data.get_region(int(px), int(py), 1, 1).get_data("RGBA", 4)
+                else:  # todo - test this bit
+                    pix = self.line_data.get_at((int(px), int(py)))
+                    print(pix)
                     self.pixel_cache[(int(px), int(py))] = 1
 
                     if len(pix) > 3:
