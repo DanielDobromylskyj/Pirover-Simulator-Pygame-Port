@@ -18,7 +18,6 @@ if __name__ == "__main__":
         if selected_file == "None":
             selected_file = None
 
-        print(selected_file, selected_robot)
-
         if selected_file is not None and selected_robot is not None:
-            simulator = Simulator(selected_file, selected_robot, start_window)
+            simulator = Simulator(selected_file, selected_robot)
+            simulator.run()

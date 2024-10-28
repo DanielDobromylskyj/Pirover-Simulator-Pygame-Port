@@ -6,7 +6,7 @@ pygame.init()
 class Simulator:
     def __init__(self, world_file="default.xml", selected_robot="Initio", window_size=None):
         if window_size is None:
-            window_size = pygame.display.get_surface().get_size()
+            window_size = pygame.display.get_desktop_sizes()[0]
 
         self.window = pygame.display.set_mode(window_size)
         self.running = False
