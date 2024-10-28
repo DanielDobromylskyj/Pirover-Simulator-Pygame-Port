@@ -11,6 +11,16 @@ class Robot:
 
         self.rotation = rotation
 
+        self.mouse_move_state = False
+        self.min_rad_sq = (0.5 * min(self.image.get_width(), self.image.get_height())) ** 2
+        self.in_collision = False
+        self.prev_x = x
+        self.prev_y = y
+        self.mouse_target_x = x
+        self.mouse_target_y = y
+        self.is_rotating = False
+        self.receiving_light_focus = False
+
     def set_position(self, x, y):
         if x is not None:
             self.x = x

@@ -21,3 +21,5 @@ if __name__ == "__main__":
         if selected_file is not None and selected_robot is not None:
             simulator = Simulator(selected_file, selected_robot)
             simulator.run()
+
+            start_window.quit_callback()

@@ -41,7 +41,7 @@ class Initio(base_robot.Robot):
         self.sonar_map = sonar_map
         self.static_objects = static_objects
 
-        super().__init__(0, 0, 0)
+        super().__init__(0, 0, 0, "resources\\robot\\rover.png")
 
         self.robot_images = {
             "png": pygame.image.load("resources\\robot\\rover.png"),

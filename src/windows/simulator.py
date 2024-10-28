@@ -57,6 +57,14 @@ class Simulator:
                 if event.type == pygame.QUIT:
                     self.running = False
 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.robot.on_mouse_press(event.pos[0], event.pos[1], event.button, None)
+
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    self.robot.on_mouse_release(event.pos[0], event.pos[1], event.button, None)
+
+
+
             self.update(self.clock.get_time() * 1000)
             self.render()
             pygame.display.flip()
