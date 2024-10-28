@@ -18,8 +18,8 @@ from src.sensors.lightsensor import FixedLightSensor
 from src.sensors.linesensor import FixedLineSensor
 from src.sensors.linesensor import LineSensorMap
 
-
-from robotconstants import *
+import src.robots.base_robot as base_robot
+from src.robots.robotconstants import *
 
 # Constants specific to the Initio robot.
 
@@ -35,13 +35,13 @@ READ_INTERVAL = 0.01
 PUBLISH_INTERVAL = 0.03
 
 
-class Initio:
-    def __init__(self, *args, **kwargs):
-        self.sonar_map = kwargs.pop('sonar_map')
-        line_map_sprite = kwargs.pop('line_map_sprite')
-        self.static_objects = kwargs.pop('static_objects')
-        window_width = kwargs.pop('window_width')
-        window_height = kwargs.pop('window_height')
+class Initio(base_robot.Robot):
+    def __init__(self, surface, sonar_map, line_map_sprite, static_objects, window_width, window_height):
+        self.surface = surface
+        self.sonar_map = sonar_map
+        self.static_objects = static_objects
+
+        super().__init__(0, 0, 0)
 
         self.robot_images = {
             "png": pygame.image.load("resources\\robot\\rover.png"),
@@ -49,85 +49,76 @@ class Initio:
             "gif_small": pygame.image.load("resources\\robot\\rover_small.gif"),
         }
 
+        self.image = self.robot_images["png"]  # ?
+
         self.robot_name = "INITIO"
-        self.radius = max(self.image.width, self.image.height) / 2.0
+        self.radius = max(self.image.get_width(), self.image.get_height()) / 2.0
 
-        x_light_offset = self.image.width / 2
-        y_light_offset = self.image.height / 2
+        x_light_offset = self.image.get_width() / 2
+        y_light_offset = self.image.get_height() / 2
 
-        self.sonar_sensor = PanningDistanceSensor(batch=batch, robot=self, sonar_map=self.sonar_map,
+        self.sonar_sensor = PanningDistanceSensor(self.surface, robot=self, sonar_map=self.sonar_map,
                                                   offset_x=SONAR_OFFSET_X,
                                                   offset_y=0,
                                                   min_range=SONAR_MIN_RANGE, max_range=SONAR_MAX_RANGE,
                                                   beam_angle=SONAR_BEAM_ANGLE)
 
-        self.ir_left_sensor = FixedTransformDistanceSensor(self, self.sonar_map, IR_OFFSET_X, IR_OFFSET_Y,
+        self.ir_left_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, IR_OFFSET_Y,
                                                            IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, IR_BEAM_ANGLE)
 
-        self.ir_right_sensor = FixedTransformDistanceSensor(self, self.sonar_map, IR_OFFSET_X, -IR_OFFSET_Y,
+        self.ir_right_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, -IR_OFFSET_Y,
                                                             -IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, IR_BEAM_ANGLE)
 
-        self.light_frontleft_sensor = FixedLightSensor(self, x_light_offset, y_light_offset - 10, "FrontLeft",
+        self.light_frontleft_sensor = FixedLightSensor(self.surface, self, x_light_offset, y_light_offset - 10, "FrontLeft",
                                                        drawing_colour=(255, 0, 0, 255))
-        self.light_frontright_sensor = FixedLightSensor(self, x_light_offset, -y_light_offset + 10, "FrontRight",
+        self.light_frontright_sensor = FixedLightSensor(self.surface, self, x_light_offset, -y_light_offset + 10, "FrontRight",
                                                         drawing_colour=(0, 255, 0, 255))
-        self.light_backleft_sensor = FixedLightSensor(self, -x_light_offset, y_light_offset - 10, "BackLeft",
+        self.light_backleft_sensor = FixedLightSensor(self.surface, self, -x_light_offset, y_light_offset - 10, "BackLeft",
                                                       drawing_colour=(0, 0, 255, 255))
-        self.light_backright_sensor = FixedLightSensor(self, -x_light_offset, -y_light_offset + 10, "BackRight",
+        self.light_backright_sensor = FixedLightSensor(self.surface, self, -x_light_offset, -y_light_offset + 10, "BackRight",
                                                        drawing_colour=(255, 255, 255, 255))
 
-        self.light_sensors = []
-        self.light_sensors.append(self.light_frontleft_sensor)
-        self.light_sensors.append(self.light_frontright_sensor)
-        self.light_sensors.append(self.light_backleft_sensor)
-        self.light_sensors.append(self.light_backright_sensor)
+        self.light_sensors = [
+            self.light_frontleft_sensor,
+            self.light_frontright_sensor,
+            self.light_backleft_sensor,
+            self.light_backright_sensor
+        ]
 
         self.line_sensor_map = LineSensorMap(line_map_sprite)
-        self.left_line_sensor = FixedLineSensor(self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
-        self.right_line_sensor = FixedLineSensor(self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
+        self.left_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
+        self.right_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
 
         self.mouse_move_state = False
         self.mouse_position = [0, 0]
 
         self.vx = 0.0
         self.vth = 0.0
-        # self.schedule_lock = False
-
-        # self.sock_recv = None
-        # self.sock_publish = None
 
         self.publish_continue = True
         self.receive_continue = True
-
-        # self.sonar_sensor.update(1)
-        # self.sonar_sensor.update_sensor()
 
         self.event_handlers = [self, self.on_mouse_release, self.on_mouse_drag]
         self.control_switch_on = True
 
-        # pyglet.clock.schedule_interval(self.update_sensors, 1.0 / 30)
-
         self.publish_thread = threading.Thread(target=self.publish_state_udp)
-        # self.publish_thread.setDaemon(True)
         self.publish_thread.start()
 
         self.cmd_thread = threading.Thread(target=self.recv_commands)
-        # self.cmd_thread.setDaemon(True)
         self.cmd_thread.start()
-        # self.start_robot()
 
     def start_robot(self):
         self.publish_continue = True
         self.receive_continue = True
+
         # this method is called when the robot control switch is switched ON
         self.control_switch_on = False
-        # release the brakes on movement
-        # pyglet.clock.unschedule(self.stop_robot_movement)
 
     def stop_robot(self):
         # cause the publish and command threads to stop
         self.publish_continue = False
         self.receive_continue = False
+
         # this method is called when the robot control switch is switched ON
         self.control_switch_on = False
         # stop movement
@@ -278,18 +269,10 @@ class Initio:
 
     def update_light_sensors(self, simulator):
         """ Updates the light sensors """
-        # light_source = self.get_shining_light()
-        # compute the angular distance of each light sensor to the light source.
-        # based on the angular distance, use a gaussian to determine the sensor
-        # value for the light source.
+
         sensor_angles = []
         for ls in self.light_sensors:
-            sensor_angles.append(
-                (ls.name, ls.update_sensor(simulator)))  # ls.update_sensor() will update each sensor's value
-            # if self.position_changed() and not self.is_rotating:
-            # update sensor values based on euclidean distance from ray end
-            # dist = ls.angdistance_to_rayend(simulator)
-            # ls.normalise_value(dist, simulator)
+            sensor_angles.append((ls.name, ls.update_sensor(simulator)))
         return sensor_angles
 
     def reset_light_sensors(self):
@@ -301,7 +284,6 @@ class Initio:
         """Update the state of the robot. This updates the velocity of the robot based on the current velocity commands
         self.vx and self.vth. Also updates the position of the sonar sensor sprite accordingly. This function will not
         update the robots state if the robot is currently being moved by the user (via mouse drag). """
-        super(Initio, self).update(dt)
         if not self.mouse_move_state:
             angle_radians = -math.radians(self.rotation)
             self.velocity_x = self.vx * math.cos(angle_radians)
@@ -342,7 +324,7 @@ class Initio:
         detection."""
         # Calculate distance between object centers that would be a collision,
         # assuming square resources
-        collision_distance = self.image.width / 2.0 + other_object.image.width / 3.0
+        collision_distance = self.image.get_width() / 2.0 + other_object.image.width / 3.0
         # Get distance using position tuples
         actual_distance = src.util.distance(self.position, other_object.position)
         return actual_distance <= collision_distance
@@ -358,25 +340,30 @@ class Initio:
 
     def delete(self):
         """Deletes the robot sprite."""
-        super(Initio, self).delete()
+        print("Delete Call (NOT IMPLEMENTED)")
 
     def draw_robot_position(self):
         """Draws a white circle on the screen at the current position of the robot."""
-        src.util.circle(self.x, self.y, 5)
+        pygame.draw.circle(
+            self.surface,
+            [255, 255, 255],
+            self.position,
+            self.radius
+        )
 
     def indicate_position(self):
-        """ lights up the led at its position with its colour value
-        """
-        vertices_fill = self.make_circle_filled()
+        """ lights up the LED at its position with its colour value """
+        print("INDICATE POSITION (LED) (NOT IMPLEMENTED)")
+    #    vertices_fill = self.make_circle_filled()
 
-        colour_opacity = 255
+    #    colour_opacity = 255
 
-        fill_colour = (255, 255, 255, colour_opacity)
+    #    fill_colour = (255, 255, 255, colour_opacity)
 
         # now fill the LED with the current light setting
-        self.batch.add(int(len(vertices_fill) / 2), pyglet.gl.GL_POINTS, None,
-                       ('v2f', vertices_fill),
-                       ('c4B', fill_colour * int(len(vertices_fill) / 2)))
+    #    self.batch.add(int(len(vertices_fill) / 2), pyglet.gl.GL_POINTS, None,
+    #                   ('v2f', vertices_fill),
+    #                   ('c4B', fill_colour * int(len(vertices_fill) / 2)))
 
     def make_circle_filled(self):
         verts = []

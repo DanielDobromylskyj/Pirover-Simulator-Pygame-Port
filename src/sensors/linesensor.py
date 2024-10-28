@@ -1,7 +1,7 @@
 import math
 import pygame
 import src.util
-import base_sensor
+import src.sensors.base_sensor as base_sensor
 
 
 class LineSensorMap:

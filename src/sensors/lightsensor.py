@@ -2,7 +2,7 @@ import math
 import pygame
 import src.util
 
-import base_sensor
+import src.sensors.base_sensor as base_sensor
 
 LIGHT_INTENSITY_MEAN_ANGLE = 0.0
 LIGHT_INTENSITY_STDDEV_ANGLE = math.pi / 3.0  #60 deg
@@ -50,10 +50,11 @@ class FixedLightSensor(base_sensor.Sensor):
         # robot whether this sensor is the one closest to the source of that ray.
         light_source = None
         if hasattr(self.parent_robot, 'static_objects'):
-            for obj in self.parent_robot.static_objects:
-                if obj.object_type is not None and obj.object_type.startswith("light"):
-                    light_source = obj
-                    break
+            if self.parent_robot.static_objects:
+                for obj in self.parent_robot.static_objects:
+                    if obj.object_type is not None and obj.object_type.startswith("light"):
+                        light_source = obj
+                        break
 
         if light_source is not None and self.parent_robot.receiving_light_focus == True:
             self.light_sensor_triggered = True

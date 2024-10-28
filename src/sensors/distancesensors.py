@@ -3,9 +3,9 @@ import pygame
 import src.resources
 import src.sprites.basicsprite
 import src.util
-import base_sensor
+import src.sensors.base_sensor as base_sensor
 
-from sonar import Sonar
+from src.sensors.sonar import Sonar
 
 
 class FixedTransformDistanceSensor(base_sensor.Sensor):
@@ -50,25 +50,19 @@ class FixedTransformDistanceSensor(base_sensor.Sensor):
     def render(self):
         pygame.draw.circle(
             self.surface,
-            (0, 255, 0),
+            (0, 0, 255),
             (int(self.sensor_x), int(self.sensor_y)),
             5,
             width=1
         )
 
 
-class PanningDistanceSensor(src.sprites.basicsprite.BasicSprite):
-    def __init__(self, *args, **kwargs):  # todo - fix this mess
-        batch = kwargs.pop('batch')
-        robot = kwargs.pop('robot')
-        sonar_map = kwargs.pop('sonar_map')
-        offset_x = kwargs.pop('offset_x')
-        offset_y = kwargs.pop('offset_y')
-        min_range = kwargs.pop('min_range')
-        max_range = kwargs.pop('max_range')
-        beam_angle = kwargs.pop('beam_angle')
-
+class PanningDistanceSensor:
+    def __init__(self, surface, robot, sonar_map, offset_x, offset_y, min_range, max_range, beam_angle):
+        self.surface = surface
         self.parent_robot = robot
+
+        self.width = 4  # todo
 
         # x offset from ???? of actual sensor point
         self.sonar_offset_x = offset_x
@@ -140,19 +134,16 @@ class PanningDistanceSensor(src.sprites.basicsprite.BasicSprite):
         self.rotation = self.parent_robot.rotation - self.sonar_angle
         self.update_sensor()
 
+    def render(self):
+        pygame.draw.circle(
+            self.surface,
+            (0, 0, 255),
+            (int(self.sensor_x), int(self.sensor_y)),
+            5,
+            width=1
+        )
 
-    def draw_sensor_position(self):
-        """Draws a circle at the origin of the sensor."""
-        src.util.circle(self.sensor_x, self.sensor_y, 5)
-        
-    def make_circle(self):
-        verts = []
-        for i in range(100):
-            angle = math.radians(float(i)/100 * 360.0)
-            x = 5*math.cos(angle) + self.sensor_x
-            y = 5*math.sin(angle) + self.sensor_y
-            verts += [x,y]
-        outline_rep = self.parent_robot.batch.add(int(len(verts)/2), pyglet.gl.GL_POINTS, None,
-        ('v2f', verts),
-        ('c4B', (255, 255, 255, 255)*int(len(verts)/2)))
-        """ return verts """
+    #def draw_sensor_position(self):
+    #    """Draws a circle at the origin of the sensor."""
+    #    src.util.circle(self.sensor_x, self.sensor_y, 5)
+

@@ -1,0 +1,248 @@
+"""
+resources.py loads both the static and dynamic resources required for the simulator. Static resources are hardcoded
+values, dynamic resources are loaded from a xml file.
+"""
+import os
+import xml.etree.ElementTree as ET
+from tkinter.filedialog import *
+
+import pygame
+from src.sensors.sonar import Map
+from src.sprites.basicsprite import BasicSprite
+from src.sprites.basicsprite import SwitchSprite
+
+from . import util
+
+NUM_LINE_MAPS = 10
+NUM_BACKGROUNDS = 4
+
+
+
+
+class DynamicAssets:
+    def __init__(self, dynamic_assets_file, selected_robot_name, pyglet_sim_window, tk_start_window, bg_batch, fg_batch, bg_subgroup,
+                                                                                                    lm_subgroup, fg_subgroup):
+        # load xml file
+        self.dynamic_assets_file = os.path.join(util.get_world_path(), dynamic_assets_file)
+        tree = ET.parse(self.dynamic_assets_file)
+        root = tree.getroot()
+
+        # setup some member variables
+        self.background_sprite = None
+        self.static_objects = []
+        self.robot_position = [0, 0]
+        self.robot_rotation = 0
+        self.start_window = pyglet_sim_window
+        self.tk_start_window = tk_start_window
+        # self.file_save_dialog = None
+        # self.process_on_mouse_click = True
+
+        self.original_file_str = None
+        self.current_file_str = None
+
+        # load the background image
+        background_image_idx = int(root.attrib['background_index'])
+        if 0 <= background_image_idx < len(backgrounds):
+            self.background_image = backgrounds[background_image_idx]
+            self.background_image.width = int(root.attrib['width'])
+            self.background_image.height = int(root.attrib['height'])
+            util.center_image(self.background_image)
+            self.background_sprite = BasicSprite(self.background_image, self.background_image.width / 2,
+                                                 self.background_image.height / 2,
+                                                 bg_batch, bg_subgroup, "background", background_image_idx)
+
+        # get the sonar map resolution and create the map
+        self.sonar_resolution = int(root.attrib['sonar_resolution'])
+        self.sonar_map = Map(self.background_image.width, self.background_image.height, self.sonar_resolution)
+
+        # create line map members
+        self.line_map_position = [0, 0]
+        self.line_map_sprite = None
+
+        # menu buttons
+        self.edit_menu_button_sprite = None
+        self.save_menu_button_sprite = None
+        self.close_menu_button_sprite = None
+
+        # switch
+        self.switch_sprite = None
+
+        # light source
+        self.light_source_sprite = None
+
+        # create rendering batches
+        self.fg_batch = fg_batch
+        self.fg_subgroup = fg_subgroup
+
+        for child in root:
+            if child.tag == "robot":
+                # extract the robot position
+                self.robot_position = [int(child.attrib["position_x"]), int(child.attrib["position_y"])]
+                self.robot_rotation = int(child.attrib["rotation"])
+            elif child.tag == "line_map":
+                # load the line map if one exists
+                line_map_index = int(child.attrib['index'])
+                if 0 <= line_map_index < len(line_maps):
+                    self.line_map_position = [int(child.attrib['position_x']), int(child.attrib['position_y'])]
+                    self.line_map_sprite = BasicSprite(line_textures[line_map_index], self.line_map_position[0],
+                                                       self.line_map_position[1],
+                                                       bg_batch, lm_subgroup, "line_map", line_map_index, line_maps[line_map_index])
+            elif child.tag == "static_object":
+                # load all static objects and create their sprites (objects are also added to the sonar map).
+                index = int(child.attrib['index'])
+                if 0 <= index < len(image_grid):
+                    x = int(child.attrib['position_x'])
+                    y = int(child.attrib['position_y'])
+                    util.center_image(image_grid[index])
+                    self.sonar_map.insert_rectangle(x, y, image_grid[index].width, image_grid[index].height)
+                    '''
+                    **********************
+                    # I'm loading the static objects in the foreground batch rather than in the background batch:
+                    # this resolves the problem where sometimes the loaded static objects hide away under the background image
+                    # while still in the sonar map of the robot (so the robot seems to collide with 'invisible' objects).
+                    # This approach simply means that the robot appears to come 'under' the static objects rather than
+                    # above them, but the this minor since the robot still collides with the objects and bumps around them
+                    # anyway.
+                    **********************
+                    '''
+                    sprt_obj = BasicSprite(image_grid[index], x, y, fg_batch, fg_subgroup, "object", index)
+                    self.static_objects.append(sprt_obj)
+
+            # elif child.tag == "switch":
+            #     x = int(child.attrib['position_x'])
+            #     y = int(child.attrib['position_y'])
+            #     util.center_image(switch_image_on)
+            #     sw_obj = SwitchSprite(switch_image_on, x, y, fg_batch, fg_subgroup, "switch", -1)
+            #     self.switch_sprite = sw_obj
+            #     self.static_objects.append(sw_obj)
+            #     # let the switch stay above every other object
+            #     #self.fg_batch.append(sw_obj)
+
+        # Load the menu buttons
+        # "edit" menu button
+        left_margin = 50.0
+        top_margin = self.background_image.height - 25.0
+        x = left_margin  # margin from the left edge of the window
+        y = top_margin  # margin from the top edge of the window
+        util.center_image(edit_menu_button)
+        sw_obj = SwitchSprite(edit_menu_button, x, y, fg_batch, fg_subgroup, self.start_window, "menu_edit_button", -1)
+        self.edit_menu_button_sprite = sw_obj
+        self.static_objects.append(self.edit_menu_button_sprite)
+
+        # "save" menu button
+        x = left_margin + edit_menu_button.width  # margin from the left edge of the window
+        y = top_margin  # margin from the top edge of the window
+        util.center_image(save_menu_button)
+        sw_obj = SwitchSprite(save_menu_button, x, y, fg_batch, fg_subgroup, self.start_window, "menu_save_button", -1)
+        self.save_menu_button_sprite = sw_obj
+        self.static_objects.append(self.save_menu_button_sprite)
+
+        # "close" menu button
+        x = left_margin + edit_menu_button.width + save_menu_button.width  # margin from the left edge of the window
+        y = top_margin  # margin from the top edge of the window
+        util.center_image(close_menu_button)
+        sw_obj = SwitchSprite(close_menu_button, x, y, fg_batch, fg_subgroup, self.start_window, "menu_close_button",
+                              -1)
+        self.close_menu_button_sprite = sw_obj
+        self.static_objects.append(self.close_menu_button_sprite)
+
+        if selected_robot_name == "Pi2Go":
+            x = self.background_image.width / 2.0  # Position the switch button at the lower center of the simulator window.
+            y = 35.0
+            util.center_image(switch_image_on)
+            sw_obj = SwitchSprite(switch_image_on, x, y, fg_batch, fg_subgroup, self.start_window, "switch", -1)
+            self.switch_sprite = sw_obj
+            self.static_objects.append(sw_obj)
+            # let the switch stay above every other object
+            # self.fg_batch.append(sw_obj)
+
+    ### Saving the world.
+    def save_to_file(self):
+        """Extract the current state of the world and save it to the xml file."""
+        # Save off original file string
+        print("In Save to file...")
+        original_file = open(self.dynamic_assets_file, "r")
+        self.original_file_str = original_file.read()
+        original_file.close()
+
+        root = ET.Element("world")
+        tree = ET.ElementTree(root)
+        root.set("background_index", str(self.background_sprite.idx))
+        root.set("width", str(self.background_sprite.width))
+        root.set("height", str(self.background_sprite.height))
+        root.set("sonar_resolution", str(self.sonar_resolution))
+
+        robot_element = ET.SubElement(root, "robot")
+        robot_element.set("position_x", str(self.robot_position[0]))
+        robot_element.set("position_y", str(self.robot_position[1]))
+        robot_element.set("rotation", str(self.robot_rotation))
+
+        if self.line_map_sprite is not None:
+            line_map_element = ET.SubElement(root, "line_map")
+            line_map_element.set("position_x", str(self.line_map_sprite.x))
+            line_map_element.set("position_y", str(self.line_map_sprite.y))
+            line_map_element.set("index", str(self.line_map_sprite.idx))
+
+        for sprite_object in self.static_objects:
+            if (sprite_object.object_type.startswith("switch")
+                    or sprite_object.object_type.startswith("menu")):
+                print("skipped menu or switch")
+                continue  # No need to save the menu buttons and the switch buttons
+
+            static_element = None
+            if sprite_object.object_type.startswith("switch"):
+                static_element = ET.SubElement(root, "switch")
+            else:
+                static_element = ET.SubElement(root, "static_object")
+            static_element.set("position_x", str(sprite_object.x))
+            static_element.set("position_y", str(sprite_object.y))
+            static_element.set("index", str(sprite_object.idx))
+
+        # tree.decode("UTF-8")
+        tree.write(open(self.dynamic_assets_file, 'w'), encoding="unicode")
+        current_file = open(self.dynamic_assets_file, "r")
+        self.current_file_str = current_file.read()
+        current_file.close()
+
+        # compare original file and current file; if current is different create a new file for it and leave original as it is
+        if self.original_file_str != self.current_file_str:
+            # write the original to the original file, and write the updated to a new file
+            original_file = open(self.dynamic_assets_file, "w")
+            original_file.write(self.original_file_str)
+            original_file.close()
+
+            # fileExt = ".xml"
+            # fileTypes = [('all files', '*.*'), ('world files', '*.xml')]
+            # # define options for opening
+            # options = {}
+            # options['defaultextension'] = fileExt
+            # options['filetypes'] = tuple(fileTypes)
+            # options['initialdir'] = util.get_world_path()
+            # options['initialfile'] = None
+            # options['title'] = "Save As"
+
+            savefile = self.my_save_file_proc()
+
+            # Now make the original file string and current file string the same
+            # to prevent the above dialog from loading up again unnecessarily - #quickfix
+            # to the problem of tkinter file dialog that keeps reloading and reloading
+            if savefile is not None:
+                self.dynamic_assets_file = savefile
+            print("-----Original world description-------")
+            print(self.original_file_str)
+            print("-----Current world description--------")
+            print(self.current_file_str)
+            print("File ", savefile, " has been updated")
+
+    def my_save_file_proc(self):
+        # root = Tk()
+        # root.withdraw()
+        fd = SaveAs(self.tk_start_window.window)
+        filename = fd.show()
+        if filename is not None and str(filename).strip() != "":
+            # Ensure the file ends in ".xml"
+            if not str(filename).lower().endswith(".xml"):
+                filename = filename + ".xml"
+            new_file = open(filename, "w")
+            new_file.write(self.current_file_str)
+        return filename

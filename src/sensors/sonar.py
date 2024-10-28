@@ -2,7 +2,7 @@ import pygame
 from math import pi, cos, sin
 import numpy as np
 
-import base_sensor
+import src.sensors.base_sensor as base_sensor
 
 SONAR_BEAM_STEP = pi / 25.0
 
