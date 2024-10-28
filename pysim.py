@@ -1,3 +1,4 @@
+from src.windows.simulator import Simulator
 from src.windows.startwindow import StartWindow
 
 if __name__ == "__main__":
@@ -18,3 +19,6 @@ if __name__ == "__main__":
             selected_file = None
 
         print(selected_file, selected_robot)
+
+        if selected_file is not None and selected_robot is not None:
+            simulator = Simulator(selected_file, selected_robot, start_window)
