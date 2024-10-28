@@ -13,7 +13,7 @@ MAX_VALUED_DIST_TO_RAYEND = LIGHT_BEAM_ANGWIDTH
 
 
 class FixedLightSensor(base_sensor.Sensor):
-    def __init__(self, surface: pygame.Surface, parent_robot, offset_x, offset_y, name="Unnamed_Light_Sensor", drawing_colour=(0, 255, 0, 255)):
+    def __init__(self, surface: pygame.Surface, parent_robot, offset_x, offset_y, name="Unnamed_Light_Sensor", drawing_colour=None):
         self.surface = surface
         self.parent_robot = parent_robot
         self.light_sensor_triggered = False
@@ -27,11 +27,11 @@ class FixedLightSensor(base_sensor.Sensor):
         self.beam_cone_or_std_dev = LIGHT_INTENSITY_STDDEV_ANGLE  # by default
         self.update_sensor(None)
         self.drawing = None
-        self.drawing_colour = drawing_colour
+        self.drawing_colour = drawing_colour if drawing_colour is not None else (0, 255, 0)
 
     def get_triggered(self):
         """ Returns the last reading taken from the sensor """
-        return self.line_sensor_triggered
+        return self.light_sensor_triggered
 
     def update_sensor(self, simulator):
         """Computes the xy position of the light sensor based on the position of the robot and queries the
@@ -72,9 +72,9 @@ class FixedLightSensor(base_sensor.Sensor):
     def set_yvalue(self, yvalue):
         self.y = self.sensor_y = yvalue
 
-    def draw_sensor_position(self):  # todo
-        """ Draws a circle at the origin of the sensor """
-        src.util.circle(self.sensor_x, self.sensor_y, 20)
+    #def draw_sensor_position(self):  # todo (is this used)?
+    #    """ Draws a circle at the origin of the sensor """
+    #    src.util.circle(self.sensor_x, self.sensor_y, 20)
 
     def angular_distance(self, light_source, simulator):
         """ Calculates the angular distance between a source of light and this sensor """
@@ -248,6 +248,14 @@ class FixedLightSensor(base_sensor.Sensor):
         self.drawing = self.parent_robot.batch.add(int(len(vertices_fill)/2), pyglet.gl.GL_POINTS, None, 
                 ('v2f', vertices_fill),
                 ('c4B', fill_colour*int(len(vertices_fill)/2)))"""
+
+    def render(self):
+        pygame.draw.circle(
+            self.surface,
+            self.drawing_colour,
+            (self.x, self.y),
+            4
+        )
 
     def make_circle_filled(self):
         verts = []
