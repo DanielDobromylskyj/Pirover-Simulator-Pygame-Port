@@ -2,6 +2,8 @@ import math
 import pygame
 import src.util
 
+import base_sensor
+
 LIGHT_INTENSITY_MEAN_ANGLE = 0.0
 LIGHT_INTENSITY_STDDEV_ANGLE = math.pi / 3.0  #60 deg
 GAUSSIAN_REGULARISER = 2.624947501  # with the light_intensity_stddev_angle and mean above, this makes the gaussian's peak value = 1.0
@@ -10,8 +12,9 @@ LIGHT_BEAM_ANGWIDTH = math.pi / 10
 MAX_VALUED_DIST_TO_RAYEND = LIGHT_BEAM_ANGWIDTH
 
 
-class FixedLightSensor:
-    def __init__(self, parent_robot, offset_x, offset_y, name="Unnamed_Light_Sensor", drawing_colour=(0, 255, 0, 255)):
+class FixedLightSensor(base_sensor.Sensor):
+    def __init__(self, surface: pygame.Surface, parent_robot, offset_x, offset_y, name="Unnamed_Light_Sensor", drawing_colour=(0, 255, 0, 255)):
+        self.surface = surface
         self.parent_robot = parent_robot
         self.light_sensor_triggered = False
         self.offset_x = offset_x
@@ -236,6 +239,7 @@ class FixedLightSensor:
         vertices_fill = self.make_circle_filled()
 
         fill_colour = self.drawing_colour
+
         if self.drawing is not None:
             self.drawing.delete()
 

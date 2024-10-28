@@ -2,12 +2,14 @@ import math
 import pygame
 import src.util
 
+import base_sensor
+
 LED_RADIUS = 4
 LED_NUMPOINTS_CIRCLE = 100
 MAX_VALUE = 4095
 
 
-class FixedLED:
+class FixedLED(base_sensor.Sensor):
     def __init__(self, parent_robot, offset_x, offset_y, name="UnNamed"):
         self.parent_robot = parent_robot
         self.offset_x = offset_x

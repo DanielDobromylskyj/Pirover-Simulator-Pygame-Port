@@ -1,15 +1,8 @@
-"""
-sonar.py defines a map and sensor class to simulate a typical sinar sensor. This is achieved using a 2D grid map which
-is defined in the Map class. The grid is a binary occupancy grid meaning a value of 1=occpied and 0=free.
-
-The Sonar class contains functions for ray casting in order to compute distance values based on obstacles defined
-by the grid map. The Sonar class uses multiple rays to replicate the wide conical nature of typical sonar sensor beams.
-Note the sonar sensor will be triggered by the edges of the map/screen as well as the obstacles defined in the grid map.
-"""
-
 import pygame
 from math import pi, cos, sin
 import numpy as np
+
+import base_sensor
 
 SONAR_BEAM_STEP = pi / 25.0
 
@@ -55,6 +48,12 @@ class Map:
         if 0 <= x < self.width and 0 <= y < self.height:
             self.grid[y][x] = val
 
+    def update(self, delta_time):
+        pass
+
+    def render(self):
+        self.draw()
+
     def draw(self):  # NOTE - if this doesn't change, we dont need to re-render it - todo
         """Draw the Grid Map."""
         self.surface.fill(MAP_BLANK_COLOUR)
@@ -71,7 +70,7 @@ class Map:
                     pygame.draw.rect(self.surface, MAP_FILL_COLOUR, square_coords)
 
 
-class Sonar:
+class Sonar(base_sensor.Sensor):
     def __init__(self, sensor_map, min_range, max_range, cone_angle):
         self.min_range = min_range
         self.max_range = max_range
