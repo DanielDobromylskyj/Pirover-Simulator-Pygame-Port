@@ -60,6 +60,9 @@ class Simulator:
                 elif event.type == pygame.MOUSEBUTTONUP:
                     self.robot.on_mouse_release(event.pos[0], event.pos[1], event.button, None)
 
+                elif event.type == pygame.MOUSEMOTION:
+                    self.robot.on_mouse_drag(event.pos[0], event.pos[1], event.rel[0], event.rel[1], event.buttons, None)
+
 
 
             self.update(self.clock.get_time() * 1000)

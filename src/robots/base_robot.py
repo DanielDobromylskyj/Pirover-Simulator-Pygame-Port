@@ -33,11 +33,13 @@ class Robot:
     def on_mouse_press(self, x, y, button, modifiers):
         """Uses a radius check to see if the sprite has been clicked, then sets the mouse move state to True so the
         sprite can be moved using the mouse."""
+
         if button == 1:
             dsq = (self.x - x) ** 2 + (self.y - y) ** 2
             # print dsq
-            if dsq < self.min_rad_sq:
-                self.mouse_move_state = True
+            if 0 < (x - self.x) < self.image.get_width():
+                if 0 < (y - self.y) < self.image.get_height():
+                    self.mouse_move_state = True
 
     def on_mouse_release(self, x, y, button, modifiers):
         """Sets the mouse move state to false once the mouse button is released."""
