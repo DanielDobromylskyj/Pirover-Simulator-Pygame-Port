@@ -52,7 +52,7 @@ class Initio(base_robot.Robot):
             "gif_small": pygame.image.load("resources\\robot\\rover_small.gif"),
         }
 
-        self.image = self.robot_images["png"]  # ?
+        self.image = self.robot_images["png_small"]  # ?
 
         self.robot_name = "INITIO"
         self.radius = max(self.image.get_width(), self.image.get_height()) / 2.0
@@ -143,8 +143,7 @@ class Initio(base_robot.Robot):
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         """Allows the robot to be dragged around using the mouse."""
         if self.mouse_move_state:
-            self.x = x
-            self.y = y
+            self.set_position(self.x + dx, self.y + dy)
             self.velocity_x = 0
             self.velocity_y = 0
             # self.sonar_sensor.update(1)
@@ -256,23 +255,8 @@ class Initio(base_robot.Robot):
         self.left_line_sensor.update_sensor()
         self.right_line_sensor.update_sensor()
 
-    #     def reset_angular_velocity(self, st):
-    #         self.velocity_x = 0.0
-    #         self.velocity_y = 0.0
-    #         self.vx = 0.0
-    #         self.vth = 0.0
-    #         time.sleep(1.0)
-    #         print("RESEeeeeeeeeeeeeeeeeting......^^^^^^^^^^^..........")
-    #         self.is_rotating = False
-    #         self.schedule_lock = False  # allow a new schedule to be made on reset_angular_velocity.
-    #
-    #     def unschedule_angvelreset(self):
-    #         pyglet.clock.unschedule(self.reset_angular_velocity)
-    #         print("unscheduled*******************+++++++++++++++++++++++++++................")
-
     def update_light_sensors(self, simulator):
         """ Updates the light sensors """
-
         sensor_angles = []
         for ls in self.light_sensors:
             sensor_angles.append((ls.name, ls.update_sensor(simulator)))
@@ -293,16 +277,6 @@ class Initio(base_robot.Robot):
             self.velocity_y = self.vx * math.sin(angle_radians)
             self.rotation -= self.vth * dt
             self.update_sensors(dt)
-        # self.sonar_sensor.update(dt)
-        # self.ir_left_sensor.update_sensor()
-        # self.ir_right_sensor.update_sensor()
-        # self.left_line_sensor.update_sensor()
-        # self.right_line_sensor.update_sensor()
-        # self.left_line_sensor.make_circle()
-        # self.right_line_sensor.make_circle()
-        # self.sonar_sensor.make_circle()
-        # self.ir_left_sensor.make_circle()
-        # self.ir_right_sensor.make_circle()
 
         # self.update_light_sensors(simulator)
         # Let the light ray track the robot when it moves normally - NO!
@@ -333,8 +307,7 @@ class Initio(base_robot.Robot):
         return actual_distance <= collision_distance
 
     def get_shining_light(self):
-        """Checks if there is a light source in the world and returns it
-        """
+        """ Checks if there is a light source in the world and returns it """
         if self.static_objects is not None:
             for obj in self.static_objects:
                 if obj.object_type.startswith("light"):
