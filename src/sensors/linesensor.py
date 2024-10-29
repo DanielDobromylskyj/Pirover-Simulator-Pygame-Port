@@ -6,8 +6,9 @@ import src.sensors.base_sensor as base_sensor
 
 
 class LineMapData:
-    def __init__(self, line_map_sprite, position):
+    def __init__(self, line_map_sprite, position, rotation):
         self.x, self.y = position
+        self.rotation = rotation
         self.image = line_map_sprite
 
 
@@ -41,46 +42,42 @@ class LineSensorMap:
         translate those to the coordinate system of the image (which may be arbitrarily positioned/rotated) so the
         correct image coordiates can be checked. Returns true if the average intensity of the pixel is greater than
         zero."""
-        try:
-            if self.line_data is not None:
-                theta = -math.radians(self.line_map_sprite.rotation)
+        if self.line_data is not None:
+            theta = -math.radians(self.line_map_sprite.rotation)
 
-                # todo - FIX ME / Make a implementation
-                px, py = src.util.rotate_around_og((self.line_map_sprite.x, self.line_map_sprite.y), (x, y), -theta)
+            px, py = src.util.rotate_around_og((self.line_map_sprite.x, self.line_map_sprite.y), (x, y), -theta)
 
-                px -= self.x_offset
-                py -= self.y_offset
+            px -= self.x_offset
+            py -= self.y_offset
 
-                if px < 0 or px > self.line_map_sprite.image.get_width():
-                    return False
-
-                if py < 0 or py > self.line_map_sprite.image.get_height:
-                    return False
-
-                if (int(px), int(py)) in self.pixel_cache:
-                    a = int(self.pixel_cache[(int(px), int(py))])
-                    return a > 0
-                else:  # todo - test this bit
-                    pix = self.line_data.get_at((int(px), int(py)))
-                    print(pix)
-                    self.pixel_cache[(int(px), int(py))] = 1
-
-                    if len(pix) > 3:
-                        r = int(pix[0])
-                        g = int(pix[1])
-                        b = int(pix[2])
-                        a = int(pix[3])
-
-                        self.pixel_cache[(int(px), int(py))] = a
-
-                        return a > 0
-                    else:
-                        return False
-            else:
+            if px < 0 or px > self.line_map_sprite.image.get_width():
                 return False
-        except AttributeError:
-            print("Error reading line sensor")
+
+            if py < 0 or py > self.line_map_sprite.image.get_height:
+                return False
+
+            if (int(px), int(py)) in self.pixel_cache:
+                a = int(self.pixel_cache[(int(px), int(py))])
+                return a > 0
+            else:  # todo - test this bit
+                pix = self.line_data.get_at((int(px), int(py)))
+                print(pix)
+                self.pixel_cache[(int(px), int(py))] = 1
+
+                if len(pix) > 3:
+                    r = int(pix[0])
+                    g = int(pix[1])
+                    b = int(pix[2])
+                    a = int(pix[3])
+
+                    self.pixel_cache[(int(px), int(py))] = a
+
+                    return a > 0
+                else:
+                    return False
+        else:
             return False
+
 
 
 class FixedLineSensor(base_sensor.Sensor):

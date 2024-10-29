@@ -71,7 +71,7 @@ class World:
                 line_map_index = int(child.attrib['index'])
                 if 0 <= line_map_index < len(line_maps):
                     self.line_map_position = [int(child.attrib['position_x']), int(child.attrib['position_y'])]
-                    self.line_map_sprite = LineMapData(line_maps[line_map_index], self.line_map_position)
+                    self.line_map_sprite = LineMapData(line_maps[line_map_index], self.line_map_position, 0)
             elif child.tag == "static_object":  # Load Static Object (And Sonar Map)
                 index = int(child.attrib['index'])
                 if 0 <= index < len(image_grid):
