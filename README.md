@@ -21,6 +21,9 @@ For details on the original project, please check out the original repository [h
 
 ## Requirements
 - Python 3.10+ (Made on 3.12)
+- Pip Installs (Non-Built-in):
+  + Pygame
+  + Numpy
 
 
 > **Note:**
