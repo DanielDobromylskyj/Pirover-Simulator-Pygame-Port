@@ -92,8 +92,16 @@ class World:
                         WorldObject(image_grid[index], x, y, "object", index)
                     )
 
+    @staticmethod
+    def __center_coords(sprite, pos):
+        return pos[0] - sprite.image.get_width() // 2, pos[
+            1] - sprite.image.get_height() // 2
+
     def render(self):
         self.surface.blit(self.background_image, (0, 0))
 
+        if self.line_map_sprite is not None:
+            self.surface.blit(self.line_map_sprite.image, self.__center_coords(self.line_map_sprite, self.line_map_position))
+
         for static_object in self.static_objects:
-            self.surface.blit(static_object.image, (static_object.x, static_object.y))
+            self.surface.blit(static_object.image, self.__center_coords(static_object, (static_object.x, static_object.y)))
