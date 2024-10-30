@@ -10,6 +10,11 @@ This repository is a **port** of the original [pirover_simulator](https://github
 
 For details on the original project, please check out the original repository [here](https://github.com/legorovers/pirover_simulator).
 
+> **Note:**
+> This repository and the original project are **not officially affiliated**;
+> this port is maintained independently.
+
+
 ## Used Libaries (Modules)
 - Pygame
 - Numpy
@@ -24,8 +29,3 @@ For details on the original project, please check out the original repository [h
 - Pip Installs (Non-Built-in):
   + Pygame
   + Numpy
-
-
-> **Note:**
-> This repository and the original project are **not officially affiliated**;
-> this port is maintained independently.
