@@ -285,10 +285,12 @@ class Initio(base_robot.Robot):
             self.velocity_y = self.vx * math.sin(angle_radians)
             self.rotation -= self.vth * dt
 
+            self.set_position(self.x + (self.velocity_x * dt), self.y + (self.velocity_y * dt))
+
             self.update_sensors(dt)
             self.update_light_sensors(simulator)
 
-        # self.update_light_sensors(simulator)
+
         # Let the light ray track the robot when it moves normally - NO!
         # if simulator.light_source is not None and not simulator.is_ray_being_dragged \
         #         and not simulator.ray_was_dragged:
@@ -330,7 +332,14 @@ class Initio(base_robot.Robot):
         self.stop_robot()
 
     def render(self):
-        self.surface.blit(self.robot_images["png_small"], self.position)
+        image_rect = self.image.get_rect(center=(self.image.get_width() // 2, self.image.get_height() // 2))
+        image_rect.x = self.x
+        image_rect.y = self.y
+
+        rotated_image = pygame.transform.rotate(self.image, self.rotation)
+        rotated_rect = rotated_image.get_rect(center=image_rect.center)
+
+        self.surface.blit(rotated_image, rotated_rect)
 
         for sensor in self.sensors:
             sensor.render()
