@@ -40,11 +40,15 @@ class FixedLightSensor(base_sensor.Sensor):
         """
         angle_radians = -math.radians(self.parent_robot.rotation)
 
-        self.set_xvalue(self.parent_robot.x + (
-                self.offset_x * math.cos(angle_radians) - (self.offset_y * math.sin(angle_radians))))
+        self.set_xvalue(
+            self.parent_robot.x +
+            (self.offset_x * math.cos(angle_radians) - self.offset_y * math.sin(angle_radians))
+        )
 
-        self.set_yvalue(self.parent_robot.y + (
-                self.offset_x * math.sin(angle_radians) + (self.offset_y * math.cos(angle_radians))))
+        self.set_yvalue(
+            self.parent_robot.y +
+            (self.offset_x * math.sin(angle_radians) + self.offset_y * math.cos(angle_radians))
+        )
 
         # ask dynamic asset's static object list whether it's holding a source of light; and, ask host 
         # robot whether this sensor is the one closest to the source of that ray.

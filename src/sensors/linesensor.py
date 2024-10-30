@@ -50,10 +50,10 @@ class LineSensorMap:
             px -= self.x_offset
             py -= self.y_offset
 
-            if px < 0 or px > self.line_map_sprite.image.get_width():
+            if px < 0 or px >= self.line_data.get_width():
                 return False
 
-            if py < 0 or py > self.line_map_sprite.image.get_height():
+            if py < 0 or py >= self.line_data.get_height():
                 return False
 
             if (int(px), int(py)) in self.pixel_cache:
@@ -120,7 +120,3 @@ class FixedLineSensor(base_sensor.Sensor):
             5,
             width=1
         )
-
-    #def draw_sensor_position(self):  # todo - unsure if needed
-    #    """Draws a circle at the origin of the sensor."""
-    #    src.util.circle(self.sensor_x, self.sensor_y, 5)
