@@ -65,7 +65,7 @@ class Simulator:
 
 
 
-            self.update(self.clock.get_time() * 1000)
+            self.update(self.clock.get_time() / 1000)
             self.render()
             pygame.display.flip()
             self.clock.tick(self.target_fps)
