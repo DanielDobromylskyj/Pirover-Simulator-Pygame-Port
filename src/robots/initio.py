@@ -124,14 +124,7 @@ class Initio(base_robot.Robot):
 
         # this method is called when the robot control switch is switched ON
         self.control_switch_on = False
-        # stop movement
-        # pyglet.clock.unschedule(self.stop_robot_movement)
         time.sleep(0.3)
-        # stop robot movement using a background thread
-        # stop_movement_thread = threading.Thread(target=pyglet.clock.schedule_interval, args=(self.stop_robot_movement, 1.0 / 30))
-        # stop_movement_thread.setDaemon(True)
-        # stop_movement_thread.start()
-        # pyglet.clock.schedule_interval(self.stop_robot_movement, 1.0 / 30)
 
     def stop_robot_movement(self, dt):
         # stop movement
@@ -243,8 +236,10 @@ class Initio(base_robot.Robot):
                     time.sleep(PUBLISH_INTERVAL)
             except Exception:
                 pass
+
         print("closing publish socket")
-        self.sock_publish.close()
+        if self.sock_publish:
+            self.sock_publish.close()
 
     def update_sensors(self, dt):
         """Take a new reading for each sensor."""
@@ -315,8 +310,9 @@ class Initio(base_robot.Robot):
         return None
 
     def delete(self):
-        """Deletes the robot sprite."""
-        print("Delete Call (NOT IMPLEMENTED)")
+        """ Deletes the robot and closes connections"""
+        self.stop_robot_movement(None)
+        self.stop_robot()
 
     def render(self):
         self.surface.blit(self.robot_images["png_small"], self.position)

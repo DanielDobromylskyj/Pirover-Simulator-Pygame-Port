@@ -74,3 +74,6 @@ class Simulator:
 
     def close(self):
         pygame.quit()
+
+        if self.robot:
+            self.robot.delete()
