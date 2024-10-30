@@ -234,7 +234,7 @@ class FixedLightSensor(base_sensor.Sensor):
 
     def indicate_position(self):
         """ lights up the LED at its position with its colour value"""
-        vertices_fill = self.make_circle_filled()
+        """vertices_fill = self.make_circle_filled()
 
         fill_colour = self.drawing_colour
 
@@ -242,7 +242,7 @@ class FixedLightSensor(base_sensor.Sensor):
             self.drawing.delete()
 
         # todo
-        """# now fill the LED with the current light setting
+        # now fill the LED with the current light setting
         self.drawing = self.parent_robot.batch.add(int(len(vertices_fill)/2), pyglet.gl.GL_POINTS, None, 
                 ('v2f', vertices_fill),
                 ('c4B', fill_colour*int(len(vertices_fill)/2)))"""
@@ -254,14 +254,3 @@ class FixedLightSensor(base_sensor.Sensor):
             (self.x, self.y),
             4
         )
-
-    def make_circle_filled(self):
-        verts = []
-        for radius in range(4, 0, -1):  # LED_RADIUS-1 so we don't cover the outline of the circle
-            num_points = int(100.0 * radius / 4.0)
-            for i in range(num_points):
-                angle = math.radians(float(i) / num_points * 360.0)
-                x = radius * math.cos(angle) + self.x
-                y = radius * math.sin(angle) + self.y
-                verts += [x, y]
-        return verts
