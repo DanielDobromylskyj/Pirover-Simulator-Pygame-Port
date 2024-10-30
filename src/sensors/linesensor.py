@@ -100,12 +100,19 @@ class FixedLineSensor(base_sensor.Sensor):
         line sensor map."""
         angle_radians = -math.radians(self.parent_robot.rotation)
 
-        self.sensor_x = self.parent_robot.x + (
-            self.offset_x * math.cos(angle_radians) - (self.offset_y * math.sin(angle_radians)))
-        self.sensor_y = self.parent_robot.y + (
-            self.offset_x * math.sin(angle_radians) + (self.offset_y * math.cos(angle_radians)))
+        self.set_xvalue(self.parent_robot.x + (
+            self.offset_x * math.cos(angle_radians) - (self.offset_y * math.sin(angle_radians))))
+
+        self.set_yvalue(self.parent_robot.y + (
+            self.offset_x * math.sin(angle_radians) + (self.offset_y * math.cos(angle_radians))))
 
         self.line_sensor_triggered = self.sensor_map.check_triggered(int(self.sensor_x), int(self.sensor_y))
+
+    def set_xvalue(self, xvalue):
+        self.x = self.sensor_x = (xvalue + self.parent_robot.image.get_width() // 2)
+
+    def set_yvalue(self, yvalue):
+        self.y = self.sensor_y = (yvalue + self.parent_robot.image.get_height() // 2)
 
     def render(self):
         pygame.draw.circle(

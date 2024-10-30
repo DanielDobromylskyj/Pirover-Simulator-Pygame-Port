@@ -68,14 +68,11 @@ class FixedLightSensor(base_sensor.Sensor):
             return 0
 
     def set_xvalue(self, xvalue):
-        self.x = self.sensor_x = xvalue
+        self.x = self.sensor_x = (xvalue + self.parent_robot.image.get_width() // 2)
 
     def set_yvalue(self, yvalue):
-        self.y = self.sensor_y = yvalue
+        self.y = self.sensor_y = (yvalue + self.parent_robot.image.get_height() // 2)
 
-    #def draw_sensor_position(self):  # todo (is this used)?
-    #    """ Draws a circle at the origin of the sensor """
-    #    src.util.circle(self.sensor_x, self.sensor_y, 20)
 
     def angular_distance(self, light_source, simulator):
         """ Calculates the angular distance between a source of light and this sensor """

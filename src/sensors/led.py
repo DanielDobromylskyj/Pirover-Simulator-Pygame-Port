@@ -51,10 +51,10 @@ class FixedLED(base_sensor.Sensor):
         self.LED_on = False
 
     def set_xvalue(self, xvalue):
-        self.x = self.sensor_x = xvalue
+        self.x = self.sensor_x = (xvalue + self.parent_robot.image.get_width() // 2)
 
     def set_yvalue(self, yvalue):
-        self.y = self.sensor_y = yvalue
+        self.y = self.sensor_y = (yvalue + self.parent_robot.image.get_height() // 2)
 
     def draw_sensor_position(self):
         """Draws a circle at the origin of the sensor """

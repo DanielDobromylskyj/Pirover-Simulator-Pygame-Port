@@ -26,11 +26,20 @@ class FixedTransformDistanceSensor(base_sensor.Sensor):
         angle_radians = -math.radians(self.parent_robot.rotation)
         beam_angle = angle_radians + self.sensor_rotation
         beam_angle = src.util.wrap_angle(beam_angle)
-        self.sensor_x = self.parent_robot.x + (
-            self.sensor_offset_x * math.cos(angle_radians) - (self.sensor_offset_y * math.sin(angle_radians)))
-        self.sensor_y = self.parent_robot.y + (
-            self.sensor_offset_x * math.sin(angle_radians) + (self.sensor_offset_y * math.cos(angle_radians)))
+
+        self.set_xvalue(self.parent_robot.x + (  # fixme - is having sensor offset y in both x/y calcs correct here?
+                self.sensor_offset_x * math.cos(angle_radians) - (self.sensor_offset_y * math.sin(angle_radians))))
+
+        self.set_yvalue(self.parent_robot.y + (
+                self.sensor_offset_y * math.sin(angle_radians) + (self.sensor_offset_y * math.cos(angle_radians))))
+
         self.sensor_range = self.sensor.update_sonar(self.sensor_x, self.sensor_y, beam_angle)
+
+    def set_xvalue(self, xvalue):
+        self.x = self.sensor_x = (xvalue + self.parent_robot.image.get_width() // 2)
+
+    def set_yvalue(self, yvalue):
+        self.y = self.sensor_y = (yvalue + self.parent_robot.image.get_height() // 2)
 
     def get_distance(self):
         """ Returns the last reading taken by this sensor """

@@ -78,7 +78,7 @@ class Sonar(base_sensor.Sensor):
         self.sensor_map = sensor_map
         self.current_range = -1.0
 
-    def update_sonar(self, x, y, theta):
+    def update_sonar(self, x, y, theta):  # todo - ensure that this is the correct position (as the robot center is NOT 0,0)
         """ Returns the distance to the nearest obstacle for a sensor at position (x, y) and at angle theta."""
         self.current_range = self.max_range
 
