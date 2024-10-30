@@ -59,9 +59,8 @@ class LineSensorMap:
             if (int(px), int(py)) in self.pixel_cache:
                 a = int(self.pixel_cache[(int(px), int(py))])
                 return a > 0
-            else:  # todo - test this bit
+            else:
                 pix = self.line_data.get_at((int(px), int(py)))
-                print(pix)
                 self.pixel_cache[(int(px), int(py))] = 1
 
                 if len(pix) > 3:
@@ -77,7 +76,6 @@ class LineSensorMap:
                     return False
         else:
             return False
-
 
 
 class FixedLineSensor(base_sensor.Sensor):
