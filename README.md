@@ -4,7 +4,7 @@
 >
 > We appreciate your patience as we work on making this project fully functional. Stay tuned for future updates!
 
-## About This Repository
+## About [Pirover-Simulator-Pygame-Port](https://github.com/DanielDobromylskyj/Pirover-Simulator-Pygame-Port)
 
 This repository is a **port** of the original [pirover_simulator](https://github.com/legorovers/pirover_simulator) project. The main change is that this version uses **Pygame** for graphical rendering instead of **Pyglet**. All other functionality and features are intended to closely match the original project, with the added compatibility for Pygame.
 
