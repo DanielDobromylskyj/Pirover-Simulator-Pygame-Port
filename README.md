@@ -11,7 +11,7 @@ This repository is a **port** of the original [pirover_simulator](https://github
 For details on the original project, please check out the original repository [here](https://github.com/legorovers/pirover_simulator).
 
 ## Used Libaries (Modules)
-- Pygmae
+- Pygame
 - Numpy
 - Tkinter
 - Math
