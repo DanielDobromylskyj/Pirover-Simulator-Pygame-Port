@@ -18,12 +18,12 @@ initio.init()
 # main loop
 try:
     while True:
-        initio.forward(speed)
-        print('Forward')
-        time.sleep(3)
-        initio.reverse(speed)
-        print('Reverse')
-        time.sleep(3)
+        #initio.forward(speed)
+        #print('Forward')
+        #time.sleep(3)
+        #initio.reverse(speed)
+        #print('Reverse')
+        #time.sleep(3)
         initio.spinRight(speed)
         print('Spin Right')
         time.sleep(3)
