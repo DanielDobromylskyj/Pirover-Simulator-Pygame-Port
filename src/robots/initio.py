@@ -92,6 +92,18 @@ class Initio(base_robot.Robot):
         self.left_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
         self.right_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
 
+        self.sensors = [
+            self.sonar_sensor,
+            self.ir_left_sensor,
+            self.ir_right_sensor,
+            self.light_frontleft_sensor,
+            self.light_frontright_sensor,
+            self.light_backleft_sensor,
+            self.light_backright_sensor,
+            self.left_line_sensor,
+            self.right_line_sensor,
+        ]
+
         self.mouse_move_state = False
         self.mouse_position = [0, 0]
 
@@ -140,6 +152,7 @@ class Initio(base_robot.Robot):
             self.velocity_x = 0
             self.velocity_y = 0
             # self.sonar_sensor.update(1)
+
 
     def recv_commands(self):
         """Thread function which handles incomming commands for an external python script via a UDP socket.
@@ -271,7 +284,9 @@ class Initio(base_robot.Robot):
             self.velocity_x = self.vx * math.cos(angle_radians)
             self.velocity_y = self.vx * math.sin(angle_radians)
             self.rotation -= self.vth * dt
+
             self.update_sensors(dt)
+            self.update_light_sensors(simulator)
 
         # self.update_light_sensors(simulator)
         # Let the light ray track the robot when it moves normally - NO!
@@ -317,6 +332,9 @@ class Initio(base_robot.Robot):
     def render(self):
         self.surface.blit(self.robot_images["png_small"], self.position)
 
+        for sensor in self.sensors:
+            sensor.render()
+
     def draw_robot_position(self):
         """Draws a white circle on the screen at the current position of the robot."""
         pygame.draw.circle(
@@ -340,16 +358,6 @@ class Initio(base_robot.Robot):
     #                   ('v2f', vertices_fill),
     #                   ('c4B', fill_colour * int(len(vertices_fill) / 2)))
 
-    def make_circle_filled(self):
-        verts = []
-        for radius in range(4, 0, -1):  # LED_RADIUS-1 so we don't cover the outline of the circle
-            num_points = int(100.0 * radius / 4.0)
-            for i in range(num_points):
-                angle = math.radians(float(i) / num_points * 360.0)
-                x = radius * math.cos(angle) + self.x
-                y = radius * math.sin(angle) + self.y
-                verts += [x, y]
-        return verts
 
     def switch_on(self):
         self.control_switch_on = False
