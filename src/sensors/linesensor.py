@@ -53,7 +53,7 @@ class LineSensorMap:
             if px < 0 or px > self.line_map_sprite.image.get_width():
                 return False
 
-            if py < 0 or py > self.line_map_sprite.image.get_height:
+            if py < 0 or py > self.line_map_sprite.image.get_height():
                 return False
 
             if (int(px), int(py)) in self.pixel_cache:
