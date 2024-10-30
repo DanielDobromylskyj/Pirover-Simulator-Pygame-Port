@@ -46,6 +46,15 @@ def get_window_size(world_file):
     return pygame.display.get_desktop_sizes()[0]  # last resort
 
 
+class WorldObject:
+    def __init__(self, image, x, y, object_type, index):
+        self.image = image
+        self.x = x
+        self.y = y
+        self.object_type = object_type
+        self.index = index
+
+
 class World:
     def __init__(self, surface, world_file):
         self.root = ET.parse(f"worlds/{world_file}").getroot()
@@ -78,7 +87,13 @@ class World:
                     x = int(child.attrib['position_x'])
                     y = int(child.attrib['position_y'])
                     self.sonar_map.insert_rectangle(x, y, image_grid[index].get_width(), image_grid[index].get_height())
-                    self.static_objects.append(image_grid[index])
+
+                    self.static_objects.append(
+                        WorldObject(image_grid[index], x, y, "object", index)
+                    )
 
     def render(self):
         self.surface.blit(self.background_image, (0, 0))
+
+        for static_object in self.static_objects:
+            self.surface.blit(static_object.image, (static_object.x, static_object.y))
