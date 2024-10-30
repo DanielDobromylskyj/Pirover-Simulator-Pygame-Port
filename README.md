@@ -20,7 +20,7 @@ For details on the original project, please check out the original repository [h
 - Socket
 
 ## Requirements
--- Python 3.10+ (Made on 3.12)
+- Python 3.10+ (Made on 3.12)
 
 
 > **Note:**
