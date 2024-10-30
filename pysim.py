@@ -23,4 +23,6 @@ if __name__ == "__main__":
             simulator.run()
 
             start_window.quit_callback()
-            break
+
+            start_window = None
+            selected_file = ""
