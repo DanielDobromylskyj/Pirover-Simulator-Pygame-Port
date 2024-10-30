@@ -76,11 +76,13 @@ class World:
             if child.tag == "robot":  # Load Position And Rotation Of Robot
                 self.robot_position = [int(child.attrib["position_x"]), int(child.attrib["position_y"])]
                 self.robot_rotation = int(child.attrib["rotation"])
+
             elif child.tag == "line_map":  # Load Line Map
                 line_map_index = int(child.attrib['index'])
                 if 0 <= line_map_index < len(line_maps):
                     self.line_map_position = [int(child.attrib['position_x']), int(child.attrib['position_y'])]
                     self.line_map_sprite = LineMapData(line_maps[line_map_index], self.line_map_position, 0)
+
             elif child.tag == "static_object":  # Load Static Object (And Sonar Map)
                 index = int(child.attrib['index'])
                 if 0 <= index < len(image_grid):
@@ -94,8 +96,7 @@ class World:
 
     @staticmethod
     def __center_coords(sprite, pos):
-        return pos[0] - sprite.image.get_width() // 2, pos[
-            1] - sprite.image.get_height() // 2
+        return pos[0] - sprite.image.get_width() // 2, pos[1] - sprite.image.get_height() // 2
 
     def render(self):
         self.surface.blit(self.background_image, (0, 0))
