@@ -53,6 +53,7 @@ class WorldObject:
         self.y = y
         self.object_type = object_type
         self.index = index
+        self.rotation = 0
 
 
 class World:
