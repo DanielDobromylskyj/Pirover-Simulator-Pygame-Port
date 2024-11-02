@@ -71,12 +71,23 @@ class Map:
 
 
 class Sonar(base_sensor.Sensor):
-    def __init__(self, sensor_map, min_range, max_range, cone_angle):
+    def __init__(self, surface, sensor_map, min_range, max_range, cone_angle):
         self.min_range = min_range
         self.max_range = max_range
         self.cone_angle = cone_angle
         self.sensor_map = sensor_map
+        self.surface = surface
         self.current_range = -1.0
+
+        self.image = pygame.transform.scale(
+            pygame.image.load("resources\\robot\\sonar.png"),
+            (30, 30)
+        )
+
+        self.x = 0
+        self.y = 0
+        self.rotation = 0
+
 
     def update_sonar(self, x, y, theta):  # todo - ensure that this is the correct position (as the robot center is NOT 0,0)
         """ Returns the distance to the nearest obstacle for a sensor at position (x, y) and at angle theta."""
@@ -84,6 +95,9 @@ class Sonar(base_sensor.Sensor):
 
         # create a bundle of rays to replicate a sonar beam
         sweep = np.arange(-self.cone_angle / 2.0, self.cone_angle / 2.0, SONAR_BEAM_STEP)
+
+        self.x, self.y = x, y
+        self.rotation = theta
 
         # cast each ray until it hits an obstacle or the end of the map
         for angle in sweep:
@@ -117,3 +131,13 @@ class Sonar(base_sensor.Sensor):
         self.current_range = min(self.max_range, self.current_range)
 
         return self.current_range
+
+    def render(self):
+        image_rect = self.image.get_rect(center=(self.image.get_width() // 2, self.image.get_height() // 2))
+        image_rect.x = self.x - self.image.get_width() // 2
+        image_rect.y = self.y - self.image.get_height() // 2
+
+        rotated_image = pygame.transform.rotate(self.image, self.rotation)
+        rotated_rect = rotated_image.get_rect(center=image_rect.center)
+
+        self.surface.blit(rotated_image, rotated_rect)

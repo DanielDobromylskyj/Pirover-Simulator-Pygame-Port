@@ -12,7 +12,7 @@ class FixedTransformDistanceSensor(base_sensor.Sensor):
     def __init__(self, surface: pygame.Surface, parent_robot, sensor_map, offset_x, offset_y, sensor_rot, min_range, max_range, beam_angle):
         self.surface = surface
         self.parent_robot = parent_robot
-        self.sensor = Sonar(sensor_map, min_range, max_range, beam_angle)
+        self.sensor = Sonar(surface, sensor_map, min_range, max_range, beam_angle)
         self.sensor_offset_x = offset_x
         self.sensor_offset_y = offset_y
         self.sensor_rotation = sensor_rot
@@ -85,7 +85,7 @@ class PanningDistanceSensor:
         self.sonar_angle_min = -90
         self.sonar_angle = 0
         self.sonar_angle_target = 0
-        self.sonar_sensor = Sonar(sonar_map, min_range, max_range, beam_angle)
+        self.sonar_sensor = Sonar(surface, sonar_map, min_range, max_range, beam_angle)
         self.rotation = 0
 
         # centre point of sensor image sprite
@@ -156,17 +156,20 @@ class PanningDistanceSensor:
                 self.sonar_angle -= 5
             else:
                 self.sonar_angle = self.sonar_angle_target
+
         self.rotation = self.parent_robot.rotation - self.sonar_angle
         self.update_sensor()
 
     def render(self):
-        pygame.draw.circle(
+        """pygame.draw.circle(
             self.surface,
             (0, 0, 255),
             (int(self.sensor_x), int(self.sensor_y)),
             5,
             width=1
-        )
+        )"""
+
+        self.sonar_sensor.render()
 
     #def draw_sensor_position(self):
     #    """Draws a circle at the origin of the sensor."""
