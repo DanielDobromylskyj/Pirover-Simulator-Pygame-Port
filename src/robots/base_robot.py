@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 
 
 class Robot:
@@ -8,6 +9,7 @@ class Robot:
         self.y = y
 
         self.image = pygame.image.load(image_path)
+        self.static_objects = []
 
         self.rotation = rotation
 
@@ -51,19 +53,72 @@ class Robot:
             self.mouse_target_x = x
             self.mouse_target_y = y
 
-    def collides_with(self, other_object, use_mouse=False):
-        """Simple axis aligned bounding box collision detections to check if this sprite collides with another."""
-        # AABB collision detection
-        if use_mouse:
-            if self.mouse_target_x < other_object.x + other_object.width and \
-                    self.mouse_target_x + self.image.get_width() > other_object.x and \
-                    self.mouse_target_y < other_object.y + other_object.height and \
-                    self.image.get_height() + self.mouse_target_y > other_object.y:
-                return True
-        else:
-            if self.x < other_object.x + other_object.width and \
-                    self.x + self.image.get_width() > other_object.x and \
-                    self.y < other_object.y + other_object.height and \
-                    self.image.get_height() + self.y > other_object.y:
+    def __robot_collides_with_object(self, x, y, rotation, static_object):
+        return self.check_overlap(
+            (x, y, self.image.get_width(), self.image.get_height(), rotation),
+            (static_object.x, static_object.y, static_object.image.get_width(), static_object.image.get_height(),
+             static_object.rotation),
+        )
+
+    def robot_collides_with_object(self, x, y, rotation):
+        for static_object in self.static_objects:
+            if self.__robot_collides_with_object(x, y, rotation, static_object):
                 return True
         return False
+
+    @staticmethod
+    def get_corners(x, y, width, height, angle):
+        cx, cy = x + width / 2, y + height / 2
+
+        corners = [
+            (-width / 2, -height / 2),
+            (width / 2, -height / 2),
+            (width / 2, height / 2),
+            (-width / 2, height / 2)
+        ]
+
+        # Rotation matrix
+        rad = np.deg2rad(angle)
+        rotation_matrix = np.array([
+            [np.cos(rad), -np.sin(rad)],
+            [np.sin(rad), np.cos(rad)]
+        ])
+
+        rotated_corners = []
+        for corner in corners:
+            rotated = rotation_matrix @ np.array(corner)  # Rotate point
+            rotated_corners.append((rotated[0] + cx, rotated[1] + cy))  # Translate to actual position
+
+        return rotated_corners
+
+    @staticmethod
+    def project(corners, axis):
+        projections = [np.dot(corner, axis) for corner in corners]
+        return min(projections), max(projections)
+
+    def overlap_on_axis(self, corners1, corners2, axis):
+        min1, max1 = self.project(corners1, axis)
+        min2, max2 = self.project(corners2, axis)
+        return max1 >= min2 and max2 >= min1
+
+    def check_overlap(self, box1, box2):
+        x1, y1, w1, h1, angle1 = box1
+        x2, y2, w2, h2, angle2 = box2
+
+        # Get corners of both rectangles
+        corners1 = self.get_corners(x1, y1, w1, h1, angle1)
+        corners2 = self.get_corners(x2, y2, w2, h2, angle2)
+
+        edges = []
+        for i in range(4):
+            edge1 = np.subtract(corners1[i], corners1[(i + 1) % 4])
+            edge2 = np.subtract(corners2[i], corners2[(i + 1) % 4])
+            edges.append(np.array([-edge1[1], edge1[0]]))
+            edges.append(np.array([-edge2[1], edge2[0]]))
+
+        for axis in edges:
+            axis = axis / np.linalg.norm(axis)  # Normalize the axis
+            if not self.overlap_on_axis(corners1, corners2, axis):
+                return False
+
+        return True

@@ -40,11 +40,11 @@ PUBLISH_INTERVAL = 0.03
 
 class Initio(base_robot.Robot):
     def __init__(self, surface, sonar_map, line_map_sprite, static_objects, window_width, window_height):
+        super().__init__(0, 0, 0, "resources\\robot\\rover.png")
+
         self.surface = surface
         self.sonar_map = sonar_map
         self.static_objects = static_objects
-
-        super().__init__(0, 0, 0, "resources\\robot\\rover.png")
 
         self.robot_images = {
             "png": pygame.image.load("resources\\robot\\rover.png"),
@@ -69,16 +69,21 @@ class Initio(base_robot.Robot):
         self.ir_left_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, IR_OFFSET_Y,
                                                            IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, IR_BEAM_ANGLE)
 
-        self.ir_right_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, -IR_OFFSET_Y,
+        self.ir_right_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X,
+                                                            -IR_OFFSET_Y,
                                                             -IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, IR_BEAM_ANGLE)
 
-        self.light_frontleft_sensor = FixedLightSensor(self.surface, self, x_light_offset, y_light_offset - 10, "FrontLeft",
+        self.light_frontleft_sensor = FixedLightSensor(self.surface, self, x_light_offset, y_light_offset - 10,
+                                                       "FrontLeft",
                                                        drawing_colour=(255, 0, 0, 255))
-        self.light_frontright_sensor = FixedLightSensor(self.surface, self, x_light_offset, -y_light_offset + 10, "FrontRight",
+        self.light_frontright_sensor = FixedLightSensor(self.surface, self, x_light_offset, -y_light_offset + 10,
+                                                        "FrontRight",
                                                         drawing_colour=(0, 255, 0, 255))
-        self.light_backleft_sensor = FixedLightSensor(self.surface, self, -x_light_offset, y_light_offset - 10, "BackLeft",
+        self.light_backleft_sensor = FixedLightSensor(self.surface, self, -x_light_offset, y_light_offset - 10,
+                                                      "BackLeft",
                                                       drawing_colour=(0, 0, 255, 255))
-        self.light_backright_sensor = FixedLightSensor(self.surface, self, -x_light_offset, -y_light_offset + 10, "BackRight",
+        self.light_backright_sensor = FixedLightSensor(self.surface, self, -x_light_offset, -y_light_offset + 10,
+                                                       "BackRight",
                                                        drawing_colour=(255, 255, 255, 255))
 
         self.light_sensors = [
@@ -90,7 +95,8 @@ class Initio(base_robot.Robot):
 
         self.line_sensor_map = LineSensorMap(line_map_sprite)
         self.left_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
-        self.right_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
+        self.right_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X,
+                                                 -LINE_OFFSET_Y)
 
         self.sensors = [
             self.sonar_sensor,
@@ -153,7 +159,6 @@ class Initio(base_robot.Robot):
             self.velocity_y = 0
             # self.sonar_sensor.update(1)
 
-
     def recv_commands(self):
         """Thread function which handles incomming commands for an external python script via a UDP socket.
 
@@ -161,10 +166,10 @@ class Initio(base_robot.Robot):
         """
         # Initialise the socket used by the command/receiving thread
         self.sock_recv = socket.socket(socket.AF_INET,  # Internet
-                                  socket.SOCK_DGRAM)  # UDP
+                                       socket.SOCK_DGRAM)  # UDP
         self.sock_recv.bind((UDP_IP, UDP_COMMAND_PORT))
         self.sock_recv.settimeout(1)
-        
+
         #  double loop is a hack - changing while True to while self.receive_continue while debugging
         while self.receive_continue is True:
             while self.receive_continue is True:
@@ -212,7 +217,7 @@ class Initio(base_robot.Robot):
         """
         # Initialise the socket used by the publish thread
         self.sock_publish = socket.socket(socket.AF_INET,  # Internet
-                                     socket.SOCK_DGRAM)  # UDP
+                                          socket.SOCK_DGRAM)  # UDP
         while self.publish_continue is True:
             while self.publish_continue is True:
                 try:
@@ -275,6 +280,23 @@ class Initio(base_robot.Robot):
             ls.reset_beam_cone_stddev()
             ls.value = 0
 
+    def update_position(self, dt):
+        target_pos = float(self.position[0]) + (self.velocity_x * dt), float(self.position[1]) + (self.velocity_y * dt)
+
+        if not self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation):
+            self.set_position(target_pos[0], target_pos[1])
+
+        else:  # if target position is NOT available, try to move each axis individually
+            if not self.robot_collides_with_object(target_pos[0], self.y, self.rotation):
+                self.set_position(x=target_pos[0])
+            else:
+                self.velocity_x = 0
+
+            if not self.robot_collides_with_object(self.x, target_pos[1], self.rotation):
+                self.set_position(y=target_pos[1])
+            else:
+                self.velocity_y = 0
+
     def update(self, dt, simulator):
         """Update the state of the robot. This updates the velocity of the robot based on the current velocity commands
         self.vx and self.vth. Also updates the position of the sonar sensor sprite accordingly. This function will not
@@ -283,20 +305,19 @@ class Initio(base_robot.Robot):
             angle_radians = -math.radians(self.rotation)
             self.velocity_x = self.vx * math.cos(angle_radians)
             self.velocity_y = self.vx * math.sin(angle_radians)
-            self.rotation -= self.vth * dt
+            self.rotation -= self.vth * dt  # todo - make this check if it can rotate first
 
-            self.set_position(self.x + (self.velocity_x * dt), self.y + (self.velocity_y * dt))
+            self.update_position(dt)
 
             self.update_sensors(dt)
             self.update_light_sensors(simulator)
-
 
         # Let the light ray track the robot when it moves normally - NO!
         # if simulator.light_source is not None and not simulator.is_ray_being_dragged \
         #         and not simulator.ray_was_dragged:
         #     if simulator.light_source.x < self.x:
         #         px = self.x - self.image.width / 2
-         #    elif simulator.light_source.x == self.x:
+        #     elif simulator.light_source.x == self.x:
         #         px = self.x
         #     else:
         #         px = self.x + self.image.width / 2
@@ -306,17 +327,7 @@ class Initio(base_robot.Robot):
         #         py = self.y
         #     else:
         #         py = self.y + self.image.height / 2
-         #    simulator.light_follow_mouse(px, py)
-
-    def robot_collides_with(self, other_object):
-        """Collision checking between the robot and another object. This function uses ver simple radius based collision
-        detection."""
-        # Calculate distance between object centers that would be a collision,
-        # assuming square resources
-        collision_distance = self.image.get_width() / 2.0 + other_object.image.width / 3.0
-        # Get distance using position tuples
-        actual_distance = src.util.distance(self.position, other_object.position)
-        return actual_distance <= collision_distance
+        #    simulator.light_follow_mouse(px, py)
 
     def get_shining_light(self):
         """ Checks if there is a light source in the world and returns it """
@@ -356,17 +367,17 @@ class Initio(base_robot.Robot):
     def indicate_position(self):
         """ lights up the LED at its position with its colour value """
         print("INDICATE POSITION (LED) (NOT IMPLEMENTED)")
+
     #    vertices_fill = self.make_circle_filled()
 
     #    colour_opacity = 255
 
     #    fill_colour = (255, 255, 255, colour_opacity)
 
-        # now fill the LED with the current light setting
+    # now fill the LED with the current light setting
     #    self.batch.add(int(len(vertices_fill) / 2), pyglet.gl.GL_POINTS, None,
     #                   ('v2f', vertices_fill),
     #                   ('c4B', fill_colour * int(len(vertices_fill) / 2)))
-
 
     def switch_on(self):
         self.control_switch_on = False
