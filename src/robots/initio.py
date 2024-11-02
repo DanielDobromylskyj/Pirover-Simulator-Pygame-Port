@@ -297,6 +297,12 @@ class Initio(base_robot.Robot):
             else:
                 self.velocity_y = 0
 
+    def update_rotation(self, dt):  # todo - maybe add a sorta "reaction" force if it is colliding with a object?
+        target_rotation = float(self.rotation) - (self.vth * dt)
+
+        if not self.robot_collides_with_object(self.x, self.y, target_rotation):
+            self.rotation = target_rotation
+
     def update(self, dt, simulator):
         """Update the state of the robot. This updates the velocity of the robot based on the current velocity commands
         self.vx and self.vth. Also updates the position of the sonar sensor sprite accordingly. This function will not
@@ -305,8 +311,8 @@ class Initio(base_robot.Robot):
             angle_radians = -math.radians(self.rotation)
             self.velocity_x = self.vx * math.cos(angle_radians)
             self.velocity_y = self.vx * math.sin(angle_radians)
-            self.rotation -= self.vth * dt  # todo - make this check if it can rotate first
 
+            self.update_rotation(dt)
             self.update_position(dt)
 
             self.update_sensors(dt)

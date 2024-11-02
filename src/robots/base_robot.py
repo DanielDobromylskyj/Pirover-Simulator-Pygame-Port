@@ -60,7 +60,7 @@ class Robot:
              static_object.rotation),
         )
 
-    def robot_collides_with_object(self, x, y, rotation):
+    def robot_collides_with_object(self, x, y, rotation):  # todo - make it only check "close" static objects
         for static_object in self.static_objects:
             if self.__robot_collides_with_object(x, y, rotation, static_object):
                 return True
