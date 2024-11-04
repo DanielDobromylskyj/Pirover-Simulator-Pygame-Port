@@ -280,29 +280,6 @@ class Initio(base_robot.Robot):
             ls.reset_beam_cone_stddev()
             ls.value = 0
 
-    def update_position(self, dt):
-        target_pos = float(self.position[0]) + (self.velocity_x * dt), float(self.position[1]) + (self.velocity_y * dt)
-
-        if not self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation):
-            self.set_position(target_pos[0], target_pos[1])
-
-        else:  # if target position is NOT available, try to move each axis individually
-            if not self.robot_collides_with_object(target_pos[0], self.y, self.rotation):
-                self.set_position(x=target_pos[0])
-            else:
-                self.velocity_x = 0
-
-            if not self.robot_collides_with_object(self.x, target_pos[1], self.rotation):
-                self.set_position(y=target_pos[1])
-            else:
-                self.velocity_y = 0
-
-    def update_rotation(self, dt):  # todo - maybe add a sorta "reaction" force if it is colliding with a object?
-        target_rotation = float(self.rotation) - (self.vth * dt)
-
-        if not self.robot_collides_with_object(self.x, self.y, target_rotation):
-            self.rotation = target_rotation
-
     def update(self, dt, simulator):
         """Update the state of the robot. This updates the velocity of the robot based on the current velocity commands
         self.vx and self.vth. Also updates the position of the sonar sensor sprite accordingly. This function will not

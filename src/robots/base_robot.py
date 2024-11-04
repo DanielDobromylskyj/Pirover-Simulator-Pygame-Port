@@ -23,7 +23,7 @@ class Robot:
         self.is_rotating = False
         self.receiving_light_focus = False
 
-    def set_position(self, x, y):
+    def set_position(self, x=None, y=None):
         if x is not None:
             self.x = x
             self.position[0] = x
@@ -65,6 +65,29 @@ class Robot:
             if self.__robot_collides_with_object(x, y, rotation, static_object):
                 return True
         return False
+
+    def update_position(self, dt):  # todo - Maybe make it so it "bounces" of walls slightly
+        target_pos = float(self.position[0]) + (self.velocity_x * dt), float(self.position[1]) + (self.velocity_y * dt)
+
+        if not self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation):
+            self.set_position(target_pos[0], target_pos[1])
+
+        else:  # if target position is NOT available, try to move each axis individually
+            if not self.robot_collides_with_object(target_pos[0], self.y, self.rotation):
+                self.set_position(x=target_pos[0])
+            else:
+                self.velocity_x = 0
+
+            if not self.robot_collides_with_object(self.x, target_pos[1], self.rotation):
+                self.set_position(y=target_pos[1])
+            else:
+                self.velocity_y = 0
+
+    def update_rotation(self, dt):  # todo - maybe add a sorta "reaction" force if it is colliding with a object?
+        target_rotation = float(self.rotation) - (self.vth * dt)
+
+        if not self.robot_collides_with_object(self.x, self.y, target_rotation):
+            self.rotation = target_rotation
 
     @staticmethod
     def get_corners(x, y, width, height, angle):
