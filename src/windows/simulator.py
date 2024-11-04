@@ -1,6 +1,8 @@
 import pygame
 
 from src.robots.initio import Initio
+from src.robots.pi2go import Pi2Go
+
 from src.world import World, get_window_size
 
 pygame.init()
@@ -33,7 +35,14 @@ class Simulator:
                 )
 
             case "Pi2Go":
-                raise NotImplementedError("Pi2Go is not implemented yet")
+                return Pi2Go(
+                    self.window,
+                    self.world.sonar_map,
+                    self.world.line_map_sprite,
+                    self.world.static_objects,
+                    self.window.get_width(),
+                    self.window.get_height()
+                )
 
             case _:
                 raise NameError(f"No Robot With Name '{selected}'")
