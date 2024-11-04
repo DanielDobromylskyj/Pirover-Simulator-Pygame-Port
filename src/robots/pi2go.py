@@ -11,7 +11,7 @@ import socket
 import threading
 import time
 
-import pyglet
+import pygame
 import src.resources
 import src.sensors.led as theled
 import src.util
@@ -19,7 +19,8 @@ from src.sensors.distancesensors import FixedTransformDistanceSensor
 from src.sensors.led import FixedLED
 from src.sensors.lightsensor import FixedLightSensor
 from src.sensors.linesensor import LineSensorMap, FixedLineSensor
-from src.sprites import basicsprite
+
+import src.robots.base_robot as base_robot
 
 from .robotconstants import SONAR_BEAM_ANGLE, SONAR_MAX_RANGE, SONAR_MIN_RANGE, IR_MAX_RANGE, IR_MIN_RANGE, \
     UDP_COMMAND_PORT, UDP_DATA_PORT, UDP_IP
@@ -39,48 +40,47 @@ READ_INTERVAL = 0.01
 PUBLISH_INTERVAL = 0.03
 
 
-class Pi2Go(basicsprite.BasicSprite):
-    def __init__(self, *args, **kwargs):
-        self.sonar_map = kwargs.pop('sonar_map')
-        line_map_sprite = kwargs.pop('line_map_sprite')
-        self.static_objects = kwargs.pop('static_objects')
-        batch = kwargs.pop('batch')
-        window_width = kwargs.pop('window_width')
-        window_height = kwargs.pop('window_height')
+class Pi2Go(base_robot.Robot):
+    def __init__(self, surface, sonar_map, line_map_sprite, static_objects, window_width, window_height):
+        super().__init__(0, 0, 0, "resources\\robot\\pi2go.png")
 
-        robot_group = pyglet.graphics.Group(1)
+        self.surface = surface
+        self.sonar_map = sonar_map
+        self.static_objects = static_objects
 
-        super(Pi2Go, self).__init__(src.resources.pi2go_image, 0, 0, batch, robot_group, window_width=window_width,
-                                    window_height=window_height)
+        self.robot_images = {
+            "png": pygame.image.load("resources\\robot\\pi2go.png"),
+            "png_small": pygame.image.load("resources\\robot\\pi2go_small.png"),
+            "gif_small": pygame.image.load("resources\\robot\\pi2go_small.gif"),
+        }
 
-        # drawing batch
-        self.batch = batch
-        self.group = robot_group
+        self.image = self.robot_images["png_small"]  # ?
+
         self.robot_name = "PI2GO"
-        self.radius = max(self.image.width, self.image.height) / 2.0
+        self.radius = max(self.image.get_width(), self.image.get_height()) / 2.0
 
-        x_light_offset = self.image.width / 2
-        y_light_offset = self.image.height / 2
+        x_light_offset = self.image.get_width() / 2
+        y_light_offset = self.image.get_height() / 2
 
-        self.sonar_sensor = FixedTransformDistanceSensor(self, self.sonar_map, SONAR_OFFSET_X, 0, 0, SONAR_MIN_RANGE,
+        self.sonar_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, SONAR_OFFSET_X, 0, 0, SONAR_MIN_RANGE,
                                                          SONAR_MAX_RANGE, SONAR_BEAM_ANGLE)
 
-        self.ir_left_sensor = FixedTransformDistanceSensor(self, self.sonar_map, IR_OFFSET_X, IR_OFFSET_Y,
+        self.ir_left_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, IR_OFFSET_Y,
                                                            IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, 0.25)
 
-        self.ir_middle_sensor = FixedTransformDistanceSensor(self, self.sonar_map, IR_OFFSET_X_MIDDLE, 0,
+        self.ir_middle_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X_MIDDLE, 0,
                                                              0, IR_MIN_RANGE, IR_MAX_RANGE, 0.25)
 
-        self.ir_right_sensor = FixedTransformDistanceSensor(self, self.sonar_map, IR_OFFSET_X, -IR_OFFSET_Y,
+        self.ir_right_sensor = FixedTransformDistanceSensor(self.surface, self, self.sonar_map, IR_OFFSET_X, -IR_OFFSET_Y,
                                                             -IR_SENSOR_ANGLE, IR_MIN_RANGE, IR_MAX_RANGE, 0.25)
 
-        self.light_frontleft_sensor = FixedLightSensor(self, x_light_offset, y_light_offset - 10, "FrontLeft",
+        self.light_frontleft_sensor = FixedLightSensor(self.surface, self, x_light_offset, y_light_offset - 10, "FrontLeft",
                                                        drawing_colour=(255, 0, 0, 255))
-        self.light_frontright_sensor = FixedLightSensor(self, x_light_offset, -y_light_offset + 10, "FrontRight",
+        self.light_frontright_sensor = FixedLightSensor(self.surface, self, x_light_offset, -y_light_offset + 10, "FrontRight",
                                                         drawing_colour=(0, 255, 0, 255))
-        self.light_backleft_sensor = FixedLightSensor(self, -x_light_offset, y_light_offset - 10, "BackLeft",
+        self.light_backleft_sensor = FixedLightSensor(self.surface, self, -x_light_offset, y_light_offset - 10, "BackLeft",
                                                       drawing_colour=(0, 0, 255, 255))
-        self.light_backright_sensor = FixedLightSensor(self, -x_light_offset, -y_light_offset + 10, "BackRight",
+        self.light_backright_sensor = FixedLightSensor(self.surface, self, -x_light_offset, -y_light_offset + 10, "BackRight",
                                                        drawing_colour=(255, 255, 255, 255))
 
         self.light_sensors = [
@@ -92,20 +92,20 @@ class Pi2Go(basicsprite.BasicSprite):
 
         # add the LEDs - radius of the light is 10, a gap of 3 is added between neighbouring leds
         # left side leds
-        self.left_led1 = FixedLED(self, 1, y_light_offset - 22, "left_led1")
-        self.left_led2 = FixedLED(self, 12, y_light_offset - 22, "left_led2")
+        self.left_led1 = FixedLED(self.surface, self, 1, y_light_offset - 22, "left_led1")
+        self.left_led2 = FixedLED(self.surface, self, 12, y_light_offset - 22, "left_led2")
 
         # right side leds
-        self.right_led1 = FixedLED(self, 1, -y_light_offset + 22, "right_led1")
-        self.right_led2 = FixedLED(self, 12, -y_light_offset + 22, "right_led2")
+        self.right_led1 = FixedLED(self.surface, self, 1, -y_light_offset + 22, "right_led1")
+        self.right_led2 = FixedLED(self.surface, self, 12, -y_light_offset + 22, "right_led2")
 
         # front side leds
-        self.front_led1 = FixedLED(self, x_light_offset - 17, -15, "front_led1")
-        self.front_led2 = FixedLED(self, x_light_offset - 17, +15, "front_led2")
+        self.front_led1 = FixedLED(self.surface, self, x_light_offset - 17, -15, "front_led1")
+        self.front_led2 = FixedLED(self.surface, self, x_light_offset - 17, +15, "front_led2")
 
         # back side leds
-        self.back_led1 = FixedLED(self, -x_light_offset + 10, -10, "back_led1")
-        self.back_led2 = FixedLED(self, -x_light_offset + 10, +10, "back_led2")
+        self.back_led1 = FixedLED(self.surface, self, -x_light_offset + 10, -10, "back_led1")
+        self.back_led2 = FixedLED(self.surface, self, -x_light_offset + 10, +10, "back_led2")
 
         self.leds = [
             self.left_led1,
@@ -119,8 +119,20 @@ class Pi2Go(basicsprite.BasicSprite):
         ]
 
         self.line_sensor_map = LineSensorMap(line_map_sprite)
-        self.left_line_sensor = FixedLineSensor(self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
-        self.right_line_sensor = FixedLineSensor(self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
+        self.left_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, LINE_OFFSET_Y)
+        self.right_line_sensor = FixedLineSensor(self.surface, self, self.line_sensor_map, LINE_OFFSET_X, -LINE_OFFSET_Y)
+
+        self.sensors = [
+            self.sonar_sensor,
+            self.ir_left_sensor,
+            self.ir_right_sensor,
+            self.light_frontleft_sensor,
+            self.light_frontright_sensor,
+            self.light_backleft_sensor,
+            self.light_backright_sensor,
+            self.left_line_sensor,
+            self.right_line_sensor,
+        ]
 
         self.mouse_move_state = False
         self.mouse_position = [0, 0]
@@ -170,14 +182,7 @@ class Pi2Go(basicsprite.BasicSprite):
         self.receive_continue = False
         self.control_switch_on = False
         self.turn_off_leds()
-        # stop movement
-        # pyglet.clock.unschedule(self.stop_robot_movement)
         time.sleep(0.3)
-        # # stop robot movement using a background thread - the target method is called continually when the robot control switch is OFF       
-        #stop_movement_thread = threading.Thread(target=pyglet.clock.schedule_interval, args=(self.stop_robot_movement, 1.0 / 30))
-        #stop_movement_thread.setDaemon(True)
-        #stop_movement_thread.start()
-        # pyglet.clock.schedule_interval(self.stop_robot_movement, 1.0 / 30)
 
     def stop_robot_movement(self, dt):
         # stop movement
@@ -207,7 +212,6 @@ class Pi2Go(basicsprite.BasicSprite):
         self.led_init_anim_on = True
         self.led_init_anim_count = 0
         self.leds_prev_values = []
-        # pyglet.clock.schedule_interval(self.led_init_animation, 1.0)
 
     def led_init_animation(self, dt):
         if self.led_init_anim_on:
@@ -220,6 +224,7 @@ class Pi2Go(basicsprite.BasicSprite):
                 led.green_value = int(random.uniform(0, theled.MAX_VALUE))
                 led.blue_value = int(random.uniform(0, theled.MAX_VALUE))
             self.light_leds()
+
         elif not self.led_init_anim_on:
             for id, led in enumerate(self.leds):
                 # reinstate the value before flash
@@ -227,6 +232,7 @@ class Pi2Go(basicsprite.BasicSprite):
                 led.green_value = self.leds_prev_values[id][1]
                 led.blue_value = self.leds_prev_values[id][2]
             self.light_leds()
+
         # toggle the on state for the next clock interval schedule
         self.led_init_anim_on = True if self.led_init_anim_on == False else False
         # update the count for the flashes
@@ -234,23 +240,16 @@ class Pi2Go(basicsprite.BasicSprite):
         if self.led_init_anim_count > LED_INIT_FLASH_COUNT:
             # stop the schedules
             self.led_init_anim_count = 0
-            pyglet.clock.unschedule(self.led_init_animation)
             self.turn_off_leds()
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         """Allows the robot to be dragged around using the mouse."""
         if self.mouse_move_state:
-            self.x = x
-            self.y = y
+            self.set_position(self.x + dx, self.y + dy)
             self.velocity_x = 0
             self.velocity_y = 0
-            #self.sonar_sensor.update(1)
+            # self.sonar_sensor.update(1)
 
-    #def on_mouse_release(self, x, y, button, modifiers):
-    #    super(Pi2Go, self).on_mouse_release(x, y, button, modifiers)
-    # update the LEDs
-    #    self.perform_led_init_animation()
-    #    self.light_leds() 
 
     def recv_commands(self):
         """Thread function which handles incomming commands for an external python script via a UDP socket.
@@ -470,44 +469,42 @@ class Pi2Go(basicsprite.BasicSprite):
         self.vx and self.vth. Also updates the position of the sonar sensor sprite accordingly. This function will not
         update the robots state if the robot is currently being moved by the user (via mouse drag). """
         # Do all the normal physics stuff
-        super(Pi2Go, self).update(dt)
+
         if not self.mouse_move_state:
             angle_radians = -math.radians(self.rotation)
             self.velocity_x = self.vx * math.cos(angle_radians)
             self.velocity_y = self.vx * math.sin(angle_radians)
             self.rotation -= self.vth * dt
+
+            self.update_rotation(dt)
+            self.update_position(dt)
+
             self.update_sensors()
-        # src.util.circle(self.left_line_sensor.sensor_x, self.left_line_sensor.sensor_y, 10, 10)
-        # src.util.circle(30, 30, 30)
-        # self.update_sensors
+
         self.update_light_sensors(simulator)
         self.light_leds()
-        # self.left_line_sensor.make_circle()
-        # self.right_line_sensor.make_circle()
-        # self.sonar_sensor.make_circle()
-        # self.ir_left_sensor.make_circle()
-        # self.ir_right_sensor.make_circle()
-        # self.ir_middle_sensor.make_circle()
-        # Let the light ray track the robot when it moves normally - NO!
-        # if simulator.light_source is not None and not simulator.is_ray_being_dragged \
-        #    and not simulator.ray_was_dragged:
-        #     if simulator.light_source.x < self.x: px = self.x - self.image.width/2
-        #     elif simulator.light_source.x == self.x: px = self.x
-        #     else: px = self.x + self.image.width/2
-        #     if simulator.light_source.y < self.y: py = self.y - self.image.height/2
-        #     elif simulator.light_source.y == self.y: py = self.y
-        #     else: py = self.y + self.image.height/2
-        #     simulator.light_follow_mouse(px, py) 
 
-    def robot_collides_with(self, other_object) -> bool:
-        """ Collision checking between the robot and another object.
-        This function uses ver simple radius based collision detection """
-        # Calculate distance between object centers that would be a collision,
-        # assuming square resources
-        collision_distance = self.radius + other_object.image.width / 2.0
-        # Get distance using position tuples
-        actual_distance = src.util.distance(self.position, other_object.position)
-        return actual_distance <= collision_distance
+    def render(self):
+        image_rect = self.image.get_rect(center=(self.image.get_width() // 2, self.image.get_height() // 2))
+        image_rect.x = self.x
+        image_rect.y = self.y
+
+        rotated_image = pygame.transform.rotate(self.image, self.rotation)
+        rotated_rect = rotated_image.get_rect(center=image_rect.center)
+
+        self.surface.blit(rotated_image, rotated_rect)
+
+        for sensor in self.sensors:
+            sensor.render()
+
+    def draw_robot_position(self):
+        """Draws a white circle on the screen at the current position of the robot."""
+        pygame.draw.circle(
+            self.surface,
+            [255, 255, 255],
+            self.position,
+            self.radius
+        )
 
     def get_shining_light(self):
         """ Checks if there is a light source in the world and returns it """
@@ -517,40 +514,15 @@ class Pi2Go(basicsprite.BasicSprite):
                     return obj
         return None
 
-    def delete(self):
-        """ Deletes the robot sprite """
-        super(Pi2Go, self).delete()
-
-    def draw_robot_position(self):
-        """ Draws a white circle on the screen at the current position of the robot """
-        src.util.circle(self.x, self.y, 5)
-
-    def indicate_position(self):
-        """ lights up the LED at its position with its colour value """
-        vertices_fill = self.make_circle_filled()
-
-        colour_opacity = 255
-
-        fill_colour = (255, 255, 255, colour_opacity)
-
-        # now fill the LED with the current light setting
-        self.led_position_data = pyglet.graphics.vertex_list(int(len(vertices_fill) / 2),
-                                                             ('v2f', vertices_fill),
-                                                             ('c4B', fill_colour * int(len(vertices_fill) / 2)))
-
-    def make_circle_filled(self) -> list:
-        verts = []
-        for radius in range(4, 0, -1):  # LED_RADIUS-1 so we don't cover the outline of the circle
-            num_points = int(100.0 * radius / 4.0)
-            for i in range(num_points):
-                angle = math.radians(float(i) / num_points * 360.0)
-                x = radius * math.cos(angle) + self.x
-                y = radius * math.sin(angle) + self.y
-                verts += [x, y]
-        return verts
-
     def switch_on(self) -> None:
         self.control_switch_on = True
 
     def switch_off(self) -> None:
         self.control_switch_on = False
+
+    def delete(self):
+        """ Deletes the robot and closes connections"""
+        self.stop_robot_movement(None)
+        self.stop_robot()
+
+
