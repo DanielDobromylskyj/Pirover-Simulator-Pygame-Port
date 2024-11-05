@@ -37,8 +37,6 @@ class Robot:
         sprite can be moved using the mouse."""
 
         if button == 1:
-            dsq = (self.x - x) ** 2 + (self.y - y) ** 2
-            # print dsq
             if 0 < (x - self.x) < self.image.get_width():
                 if 0 < (y - self.y) < self.image.get_height():
                     self.mouse_move_state = True
@@ -66,7 +64,7 @@ class Robot:
                 return True
         return False
 
-    def update_position(self, dt):  # todo - Maybe make it so it "bounces" of walls slightly
+    def update_position(self, dt):  # todo - Maybe make it so it "bounces" of walls slightly (or rotate)
         target_pos = float(self.position[0]) + (self.velocity_x * dt), float(self.position[1]) + (self.velocity_y * dt)
 
         if not self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation):
