@@ -23,29 +23,28 @@ class Simulator:
         self.robot = self.load_robot(selected_robot)
 
     def load_robot(self, selected):
-        match selected:
-            case "Initio":
-                return Initio(
-                    self.window,
-                    self.world.sonar_map,
-                    self.world.line_map_sprite,
-                    self.world.static_objects,
-                    self.window.get_width(),
-                    self.window.get_height()
-                )
+        if selected == "Initio":
+            return Initio(
+                self.window,
+                self.world.sonar_map,
+                self.world.line_map_sprite,
+                self.world.static_objects,
+                self.window.get_width(),
+                self.window.get_height()
+            )
 
-            case "Pi2Go":
-                return Pi2Go(
-                    self.window,
-                    self.world.sonar_map,
-                    self.world.line_map_sprite,
-                    self.world.static_objects,
-                    self.window.get_width(),
-                    self.window.get_height()
-                )
+        elif selected == "Pi2Go":
+            return Pi2Go(
+                self.window,
+                self.world.sonar_map,
+                self.world.line_map_sprite,
+                self.world.static_objects,
+                self.window.get_width(),
+                self.window.get_height()
+            )
 
-            case _:
-                raise NameError(f"No Robot With Name '{selected}'")
+        else:
+             raise NameError(f"No Robot With Name '{selected}'")
 
     def render(self):
         self.world.render()
