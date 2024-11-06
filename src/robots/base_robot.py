@@ -8,6 +8,8 @@ class Robot:
         self.x = x
         self.y = y
 
+        self.mass = 5  # kg - Not sure about the true value
+
         self.image = pygame.image.load(image_path)
         self.static_objects = []
 
@@ -60,32 +62,68 @@ class Robot:
 
     def robot_collides_with_object(self, x, y, rotation):  # todo - make it only check "close" static objects
         for static_object in self.static_objects:
-            if self.__robot_collides_with_object(x, y, rotation, static_object):
-                return True
+            if self.__robot_collides_with_object(x, y, rotation, static_object)[0] is True:
+                return static_object
         return False
 
-    def update_position(self, dt):  # todo - Maybe make it so it "bounces" of walls slightly (or rotate)
+    def update_position(self, dt):
         target_pos = float(self.position[0]) + (self.velocity_x * dt), float(self.position[1]) + (self.velocity_y * dt)
 
         if not self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation):
             self.set_position(target_pos[0], target_pos[1])
 
-        else:  # if target position is NOT available, try to move each axis individually
-            if not self.robot_collides_with_object(target_pos[0], self.y, self.rotation):
-                self.set_position(x=target_pos[0])
-            else:
-                self.velocity_x = 0
+        else:
+            static_object = self.robot_collides_with_object(target_pos[0], target_pos[1], self.rotation)
+            collision_normal, collision_point = self.__robot_collides_with_object(target_pos[0], target_pos[1],
+                                                                                  self.rotation, static_object)[1:]
 
-            if not self.robot_collides_with_object(self.x, target_pos[1], self.rotation):
-                self.set_position(y=target_pos[1])
-            else:
-                self.velocity_y = 0
+            if collision_normal is not None:
+                angular_velocity = self.calculate_angular_velocity_change(
+                    self.mass, self.image.get_width(), self.image.get_height(),
+                    (self.velocity_x ** 2 + self.velocity_y ** 2) ** 0.5,
+                    collision_normal, collision_point, dt
+                )
+
+                self.rotation += angular_velocity
+
+            else:  # Something went wrong, default to "safer" collision code
+                # if target position is NOT available, try to move each axis individually (OLD CODE)
+                if not self.robot_collides_with_object(target_pos[0], self.y, self.rotation):
+                    self.set_position(x=target_pos[0])
+                else:
+                    self.velocity_x = 0
+
+                if not self.robot_collides_with_object(self.x, target_pos[1], self.rotation):
+                    self.set_position(y=target_pos[1])
+                else:
+                    self.velocity_y = 0
 
     def update_rotation(self, dt):  # todo - maybe add a sorta "reaction" force if it is colliding with a object?
         target_rotation = float(self.rotation) - (self.vth * dt)
 
         if not self.robot_collides_with_object(self.x, self.y, target_rotation):
             self.rotation = target_rotation
+
+    @staticmethod
+    def calculate_angular_velocity_change(mass, width, height, velocity, normal, collision_point, dt):
+        # Assume normal is normalized and velocity is a 2D vector
+        # Relative velocity along the normal
+        rel_velocity_normal = np.dot(velocity, normal)
+
+        # Impulse magnitude (assuming perfectly inelastic collision for simplicity)
+        impulse_magnitude = -rel_velocity_normal * mass
+
+        # Torque = lever_arm * impulse vector
+        impulse_vector = impulse_magnitude * normal
+        torque = np.cross(collision_point, impulse_vector)
+
+        # Moment of inertia for a rectangle around its center
+        inertia = (1 / 12) * mass * (width ** 2 + height ** 2)
+
+        # Angular velocity change (Δω = α * dt)
+        angular_acceleration = torque / inertia
+        angular_velocity_change = angular_acceleration * dt
+        return angular_velocity_change
 
     @staticmethod
     def get_corners(x, y, width, height, angle):
@@ -120,7 +158,9 @@ class Robot:
     def overlap_on_axis(self, corners1, corners2, axis):
         min1, max1 = self.project(corners1, axis)
         min2, max2 = self.project(corners2, axis)
-        return max1 >= min2 and max2 >= min1
+        # Calculate the overlap amount on this axis
+        overlap = min(max1, max2) - max(min1, min2)
+        return overlap if overlap > 0 else None  # Return overlap if it exists, else None
 
     def check_overlap(self, box1, box2):
         x1, y1, w1, h1, angle1 = box1
@@ -134,12 +174,30 @@ class Robot:
         for i in range(4):
             edge1 = np.subtract(corners1[i], corners1[(i + 1) % 4])
             edge2 = np.subtract(corners2[i], corners2[(i + 1) % 4])
+            # Get perpendiculars to edges to use as axes
             edges.append(np.array([-edge1[1], edge1[0]]))
             edges.append(np.array([-edge2[1], edge2[0]]))
 
+        min_overlap = float('inf')
+        collision_normal = None
+
+        # Track the collision point
+        collision_point = None
+
         for axis in edges:
             axis = axis / np.linalg.norm(axis)  # Normalize the axis
-            if not self.overlap_on_axis(corners1, corners2, axis):
-                return False
+            overlap = self.overlap_on_axis(corners1, corners2, axis)
 
-        return True
+            if overlap is None:
+                return False, None, None  # No collision if there's no overlap on any axis
+
+            if overlap < min_overlap:
+                min_overlap = overlap
+                collision_normal = axis  # This axis is the normal of the collided edge
+
+                # Find the collision point on box1
+                projections1 = [np.dot(corner, axis) for corner in corners1]
+                max_projection_idx = np.argmax(projections1)
+                collision_point = corners1[max_projection_idx]
+
+        return True, collision_normal, collision_point

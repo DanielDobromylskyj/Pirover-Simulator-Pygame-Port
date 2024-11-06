@@ -6,7 +6,7 @@ import threading
 
 
 def _start_test():
-    import examples.SonarAvoider
+    import examples.LineFollower
 
 
 def start_test():
@@ -32,7 +32,6 @@ if __name__ == "__main__":
 
         if selected_file is not None and selected_robot is not None:
             simulator = Simulator(selected_file, selected_robot)
-            #simulator.robot.rotation = 45
             start_test()
             simulator.run()
 
