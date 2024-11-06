@@ -72,6 +72,7 @@ class Simulator:
                     self.robot.on_mouse_drag(event.pos[0], event.pos[1], event.rel[0], event.rel[1], event.buttons, None)
 
             self.update(self.clock.get_time() / 1000)
+            self.window.fill((0, 0, 0))
             self.render()
             pygame.display.flip()
             self.clock.tick(self.target_fps)
