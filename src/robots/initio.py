@@ -21,8 +21,6 @@ from src.sensors.linesensor import LineSensorMap
 import src.robots.base_robot as base_robot
 from src.robots.robotconstants import *
 
-from pirover_simulator.src.robots.robotconstants import IR_MIN_RANGE, IR_BEAM_ANGLE, SONAR_BEAM_ANGLE, SONAR_MIN_RANGE, \
-    SONAR_MAX_RANGE, IR_MAX_RANGE
 
 # Constants specific to the Initio robot.
 

@@ -44,7 +44,7 @@ class Simulator:
             )
 
         else:
-             raise NameError(f"No Robot With Name '{selected}'")
+            raise NameError(f"No Robot With Name '{selected}'")
 
     def render(self):
         self.world.render()
@@ -70,8 +70,6 @@ class Simulator:
 
                 elif event.type == pygame.MOUSEMOTION:
                     self.robot.on_mouse_drag(event.pos[0], event.pos[1], event.rel[0], event.rel[1], event.buttons, None)
-
-
 
             self.update(self.clock.get_time() / 1000)
             self.render()
