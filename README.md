@@ -35,9 +35,9 @@ For details on the original project, please check out the original repository [h
 > + src
 >   + robots
 >     + base robot
->       - Add rotational "reaction" force on collision.
+>       - Add rotational "reaction" force on collision. (Added, just requires more testing and 'work')
 >       - Add Slight "bounce" to colliding on walls.
 >     + pi2go
->       - Well, Implement it.
+>       - Complete Tests
 >   + sensors
 >     - Ensure all sensors render correctly
