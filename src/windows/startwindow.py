@@ -106,15 +106,12 @@ class StartWindow:
         warning.title("Credit")
         warning.geometry("500x150")
 
-        # Make it modal (disable interactions with main window)
         warning.transient(self.window)  # Keep it on top of main window
         warning.grab_set()  # Prevents interaction with main window
 
-        # Add a label and a continue button to the pop-up
         label = Label(warning, text="WARNING - I am not the owner of this project,\n this is a port / copy of https://github.com/legorovers/pirover_simulator\nThis copy contains a different rendering backend and a few extra features\n(find changes on the github page)", font=("Arial", 10))
         label.pack(pady=20)
 
-        # Function to close the warning window
         def close_warning():
             warning.destroy()
 
