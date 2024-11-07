@@ -99,6 +99,28 @@ class StartWindow:
         self.selected_file = "None"
         self.selected_robot_name = "None"
 
+        self.display_warning()
+
+    def display_warning(self):
+        warning = Toplevel(self.window)
+        warning.title("Credit")
+        warning.geometry("500x150")
+
+        # Make it modal (disable interactions with main window)
+        warning.transient(self.window)  # Keep it on top of main window
+        warning.grab_set()  # Prevents interaction with main window
+
+        # Add a label and a continue button to the pop-up
+        label = Label(warning, text="WARNING - I am not the owner of this project,\n this is a port / copy of https://github.com/legorovers/pirover_simulator\nThis copy contains a different rendering backend and a few extra features\n(find changes on the github page)", font=("Arial", 10))
+        label.pack(pady=20)
+
+        # Function to close the warning window
+        def close_warning():
+            warning.destroy()
+
+        continue_button = Button(warning, text="Continue", command=close_warning)
+        continue_button.pack(pady=10)
+
 
     def refresh_world_filelist(self):
         """Refreshes files by clearing the word_files_list, going through the current directory and removing all .xml
